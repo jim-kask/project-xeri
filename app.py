@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_socketio import SocketIO, emit
 import os
 
@@ -7,12 +7,12 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 
 @app.route('/')
 def index():
-    return "Ξερή is live!"
+    return render_template('index.html')
 
 @socketio.on('connect')
 def handle_connect():
-    print("A user connected")
-    emit("message", "Welcome to the game!")
+    print("Client connected")
+    emit("message", "Καλώς τους!")
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
