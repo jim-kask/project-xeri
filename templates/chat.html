@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chatroom</title>
+</head>
+<body>
+  <h1>Welcome, {{ username }}!</h1>
+  <div style="display: flex; gap: 20px;">
+    <div style="width: 200px; border: 1px solid black; padding: 10px;">
+      <h3>Online Users</h3>
+      <ul id="users">
+        <li>{{ username }}</li>
+      </ul>
+    </div>
+    <div style="flex-grow: 1; border: 1px solid black; padding: 10px;">
+      <h3>Chat</h3>
+      <div id="chatbox" style="height: 200px; overflow-y: scroll; border: 1px solid gray; padding: 5px;"></div>
+      <form id="chat-form">
+        <input type="text" id="message" placeholder="Type message..." required>
+        <button type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+  <p><a href="/logout">Logout</a></p>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io();
+    const form = document.getElementById('chat-form');
+    const messageInput = document.getElementById('message');
+    const chatbox = document.getElementById('chatbox');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const msg = messageInput.value;
+      socket.emit('chat', msg);
+      messageInput.value = '';
+    });
+
+    socket.on('chat', (data) => {
+      const div = document.createElement('div');
+      div.textContent = data;
+      chatbox.appendChild(div);
+    });
+  </script>
+</body>
+</html>
