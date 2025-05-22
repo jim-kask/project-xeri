@@ -2,13 +2,15 @@ from flask import Flask, render_template, request, redirect, url_for, session
 from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
+from models import db, User, Message
+
 import os
 
 from models import db, User
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite3'
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -66,7 +68,8 @@ def logout():
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('chat.html', username=session['username'])
+    messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
+    return render_template('chat.html', username=session['username'], messages=messages)
 
 @socketio.on('connect')
 def handle_connect():
@@ -77,7 +80,14 @@ def handle_connect():
 def handle_chat(msg):
     username = session.get('username', 'Anonymous')
     full_msg = f"{username}: {msg}"
+
+    # Save to database
+    message = Message(username=username, text=msg)
+    db.session.add(message)
+    db.session.commit()
+
     emit('chat', full_msg, broadcast=True)
+
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

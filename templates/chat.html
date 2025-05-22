@@ -14,7 +14,12 @@
     </div>
     <div style="flex-grow: 1; border: 1px solid black; padding: 10px;">
       <h3>Chat</h3>
-      <div id="chatbox" style="height: 200px; overflow-y: scroll; border: 1px solid gray; padding: 5px;"></div>
+      <div id="chatbox" style="height: 200px; overflow-y: scroll; border: 1px solid gray; padding: 5px;">
+  {% for message in messages %}
+    <div>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}: {{ message.text }}</div>
+  {% endfor %}
+</div>
+
       <form id="chat-form">
         <input type="text" id="message" placeholder="Type message..." required>
         <button type="submit">Send</button>
