@@ -1,4 +1,4 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, redirect, url_for
 from flask_socketio import SocketIO, emit
 import os
 
@@ -8,6 +8,24 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        print(f"Register attempt: {username} / {password}")
+        return redirect(url_for('index'))
+    return render_template('register.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        print(f"Login attempt: {username} / {password}")
+        return redirect(url_for('index'))
+    return render_template('login.html')
 
 @socketio.on('connect')
 def handle_connect():
