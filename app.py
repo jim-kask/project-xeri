@@ -11,14 +11,15 @@ app.config['SECRET_KEY'] = 'your-secret-key'
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(app)
 socketio = SocketIO(app, cors_allowed_origins="*")
+db.init_app(app)
 
 with app.app_context():
     db.create_all()
 
-# 🟢 Track online users
+# Track online users and active sessions
 online_users = set()
+sessions = {}
 
 @app.route('/')
 def index():
@@ -56,7 +57,11 @@ def login():
 
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
+            if username in sessions:
+                return "User is already logged in elsewhere"
+
             session['username'] = username
+            sessions[username] = True
             return redirect(url_for('chat'))
         else:
             return "Invalid username or password"
@@ -66,8 +71,9 @@ def login():
 @app.route('/logout')
 def logout():
     username = session.get('username')
-    if username in online_users:
-        online_users.remove(username)
+    if username:
+        online_users.discard(username)
+        sessions.pop(username, None)
         emit('update_users', list(online_users), broadcast=True, namespace='/')
     session.pop('username', None)
     return redirect(url_for('index'))
@@ -84,33 +90,39 @@ def handle_connect():
     username = session.get('username')
     if username:
         online_users.add(username)
-        print(f"{username} connected")
         emit('message', f"{username} joined the chat", broadcast=True)
         emit('update_users', list(online_users), broadcast=True)
 
 @socketio.on('disconnect')
 def handle_disconnect():
     username = session.get('username')
-    if username and username in online_users:
-        online_users.remove(username)
-        print(f"{username} disconnected")
+    if username:
+        online_users.discard(username)
+        sessions.pop(username, None)
         emit('update_users', list(online_users), broadcast=True)
 
 @socketio.on('chat')
 def handle_chat(msg):
     username = session.get('username', 'Anonymous')
-
-    # Save to database
     message = Message(username=username, text=msg)
     db.session.add(message)
     db.session.commit()
-
     timestamp = message.timestamp.strftime('%H:%M')
     emit('chat', {
         'username': username,
         'text': msg,
         'timestamp': timestamp
     }, broadcast=True)
+
+@socketio.on('typing')
+def handle_typing():
+    username = session.get('username')
+    if username:
+        emit('typing', username, broadcast=True, include_self=False)
+
+@socketio.on('stop_typing')
+def handle_stop_typing():
+    emit('stop_typing', broadcast=True, include_self=False)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

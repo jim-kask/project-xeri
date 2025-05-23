@@ -1,17 +1,34 @@
+<!-- Full updated chat.html with all requested features -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Chatroom</title>
+  <style>
+    body.dark-mode {
+      background-color: #1e1e1e;
+      color: white;
+    }
+    .dark-mode input, .dark-mode textarea {
+      background-color: #333;
+      color: white;
+    }
+    .emoji-panel span {
+      cursor: pointer;
+      font-size: 24px;
+      margin: 0 5px;
+    }
+  </style>
 </head>
 <body>
   <h1>Welcome, {{ username }}!</h1>
+
+  <button id="darkToggle">Toggle Dark Mode</button>
+
   <div style="display: flex; gap: 20px;">
     <!-- Online Users -->
     <div style="width: 200px; border: 1px solid black; padding: 10px;">
       <h3>Online Users</h3>
-      <ul id="users">
-        <!-- Will be filled dynamically -->
-      </ul>
+      <ul id="users"></ul>
     </div>
 
     <!-- Chat Section -->
@@ -23,8 +40,20 @@
         {% endfor %}
       </div>
 
+      <!-- Typing Indicator -->
+      <p id="typing" style="font-style: italic; color: gray;"></p>
+
+      <!-- Emoji Panel -->
+      <div class="emoji-panel">
+        <span>😀</span> <span>😍</span> <span>🤣</span>
+        <span>😢</span> <span>😡</span> <span>🙌</span>
+        <span>🎉</span> <span>💏</span> <span>👍</span>
+      </div>
+
+      <!-- Chat Form -->
       <form id="chat-form">
         <input type="text" id="message" placeholder="Type message..." required autocomplete="off">
+        <input type="file" id="imageInput" accept="image/*">
         <button type="submit">Send</button>
       </form>
     </div>
@@ -39,21 +68,61 @@
     const messageInput = document.getElementById('message');
     const chatbox = document.getElementById('chatbox');
     const userList = document.getElementById('users');
+    const typingEl = document.getElementById('typing');
+    const emojiPanel = document.querySelector('.emoji-panel');
+    const darkToggle = document.getElementById('darkToggle');
+    const imageInput = document.getElementById('imageInput');
+
+    // Restore dark mode
+    if (localStorage.getItem('darkMode') === 'on') {
+      document.body.classList.add('dark-mode');
+    }
+
+    darkToggle.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? 'on' : 'off');
+    });
+
+    emojiPanel.addEventListener('click', (e) => {
+      if (e.target.tagName === 'SPAN') {
+        messageInput.value += e.target.textContent;
+        messageInput.focus();
+      }
+    });
+
+    let typingTimeout;
+
+    messageInput.addEventListener('input', () => {
+      socket.emit('typing');
+      clearTimeout(typingTimeout);
+      typingTimeout = setTimeout(() => socket.emit('stop_typing'), 1000);
+    });
 
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const msg = messageInput.value.trim();
-      if (msg.length > 0) {
+
+      if (msg.length === 0 && !imageInput.files[0]) return;
+
+      if (imageInput.files[0]) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          socket.emit('chat', msg + ' <img src="' + reader.result + '" width="100">');
+        };
+        reader.readAsDataURL(imageInput.files[0]);
+      } else {
         socket.emit('chat', msg);
-        messageInput.value = '';
       }
+
+      messageInput.value = '';
+      imageInput.value = '';
     });
 
     socket.on('chat', (data) => {
       const div = document.createElement('div');
-      div.textContent = `${data.timestamp} - ${data.username}: ${data.text}`;
+      div.innerHTML = `${data.timestamp} - ${data.username}: ${data.text}`;
       chatbox.appendChild(div);
-      chatbox.scrollTop = chatbox.scrollHeight; // Auto-scroll
+      chatbox.scrollTop = chatbox.scrollHeight;
     });
 
     socket.on('update_users', (usernames) => {
@@ -63,6 +132,14 @@
         li.textContent = user;
         userList.appendChild(li);
       });
+    });
+
+    socket.on('typing', (user) => {
+      typingEl.textContent = `${user} is typing...`;
+    });
+
+    socket.on('stop_typing', () => {
+      typingEl.textContent = '';
     });
   </script>
 </body>
