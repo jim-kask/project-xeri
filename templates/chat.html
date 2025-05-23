@@ -1,152 +1,64 @@
-<!-- updated chat.html with moderator controls, notifications, and UX fixes -->
+<!-- chat.html with delete/mute/unmute and (muted) labels -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Chatroom</title>
   <style>
-    body.dark-mode {
-      background-color: #1e1e1e;
-      color: white;
-    }
-    .dark-mode input, .dark-mode textarea {
-      background-color: #333;
-      color: white;
-    }
-    .emoji-panel span {
-      cursor: pointer;
-      font-size: 24px;
-      margin: 0 5px;
-    }
-    .notification {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      background: #222;
-      color: #fff;
-      padding: 10px;
-      border-radius: 5px;
-      opacity: 0.9;
-      z-index: 1000;
-      display: none;
-    }
     .chat-message {
       display: flex;
       justify-content: space-between;
+      align-items: center;
     }
-    .chatbox-wrapper {
-      height: 230px;
-      overflow-y: scroll;
-      border: 1px solid gray;
-      padding: 5px;
-      display: flex;
-      flex-direction: column;
+    .admin-controls {
+      margin-left: 10px;
     }
-    #typing-space {
-      height: 20px;
+    .muted-label {
+      color: red;
       font-style: italic;
-      color: gray;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome, {{ username }}!</h1>
-
-  <button id="darkToggle">Toggle Dark Mode</button>
-
-  <div style="display: flex; gap: 20px;">
-    <div style="width: 200px; border: 1px solid black; padding: 10px;">
-      <h3>Online Users</h3>
-      <ul id="users"></ul>
-    </div>
-
-    <div style="flex-grow: 1; border: 1px solid black; padding: 10px;">
-      <h3>Chat</h3>
-      <div id="chatbox" class="chatbox-wrapper">
-        {% for message in messages %}
-          <div class="chat-message" data-id="{{ message.id }}">
-            <span>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}: {{ message.text|safe }}</span>
-            {% if username == 'Dimitrios' %}<button class="delete-btn">🗑️</button>{% endif %}
-          </div>
-        {% endfor %}
+  <h1>Welcome, {{ username }}{% if is_mod %} [MOD]{% endif %}</h1>
+  <div id="chatbox">
+    {% for message in messages %}
+      <div class="chat-message" data-id="{{ message.id }}">
+        <span>
+          {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
+          {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
+        </span>
+        {% if is_mod %}
+          <span class="admin-controls">
+            <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+            {% if message.username in muted %}
+              <button onclick="unmuteUser('{{ message.username }}')">🔊</button>
+            {% else %}
+              <button onclick="muteUser('{{ message.username }}')">🔇</button>
+            {% endif %}
+          </span>
+        {% endif %}
       </div>
-      <div id="typing-space"></div>
-
-      <div class="emoji-panel">
-        <span>😀</span> <span>😍</span> <span>🤣</span>
-        <span>😢</span> <span>😡</span> <span>🙌</span>
-        <span>🎉</span> <span>❤️</span> <span>👍</span>
-      </div>
-
-      <form id="chat-form">
-        <input type="text" id="message" placeholder="Type message..." required autocomplete="off">
-        <input type="file" id="imageInput" accept="image/*">
-        <button type="submit">Send</button>
-      </form>
-    </div>
+    {% endfor %}
   </div>
-
-  <div class="notification" id="notify"></div>
-
-  <p><a href="/logout">Logout</a></p>
+  <form id="chat-form">
+    <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
+    <button type="submit">Send</button>
+  </form>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
     const socket = io();
+    const chatbox = document.getElementById('chatbox');
     const form = document.getElementById('chat-form');
     const messageInput = document.getElementById('message');
-    const chatbox = document.getElementById('chatbox');
-    const userList = document.getElementById('users');
-    const typingEl = document.getElementById('typing-space');
-    const emojiPanel = document.querySelector('.emoji-panel');
-    const darkToggle = document.getElementById('darkToggle');
-    const imageInput = document.getElementById('imageInput');
-    const notify = document.getElementById('notify');
 
-    // Scroll to bottom on load
-    window.onload = () => {
-      chatbox.scrollTop = chatbox.scrollHeight;
-    };
-
-    if (localStorage.getItem('darkMode') === 'on') {
-      document.body.classList.add('dark-mode');
-    }
-
-    darkToggle.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      localStorage.setItem('darkMode', document.body.classList.contains('dark-mode') ? 'on' : 'off');
-    });
-
-    emojiPanel.addEventListener('click', (e) => {
-      if (e.target.tagName === 'SPAN') {
-        messageInput.value += e.target.textContent;
-        messageInput.focus();
-      }
-    });
-
-    let typingTimeout;
-    messageInput.addEventListener('input', () => {
-      socket.emit('typing');
-      clearTimeout(typingTimeout);
-      typingTimeout = setTimeout(() => socket.emit('stop_typing'), 1000);
-    });
-
-    form.addEventListener('submit', function (e) {
+    form.addEventListener('submit', (e) => {
       e.preventDefault();
       const msg = messageInput.value.trim();
-      if (msg.length === 0 && !imageInput.files[0]) return;
-
-      if (imageInput.files[0]) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          socket.emit('chat', msg + ' <img src="' + reader.result + '" width="100">');
-        };
-        reader.readAsDataURL(imageInput.files[0]);
-      } else {
+      if (msg) {
         socket.emit('chat', msg);
+        messageInput.value = '';
       }
-
-      messageInput.value = '';
-      imageInput.value = '';
     });
 
     socket.on('chat', (data) => {
@@ -154,20 +66,8 @@
       div.className = 'chat-message';
       div.dataset.id = data.id;
       div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
-      if (data.mod) {
-        const del = document.createElement('button');
-        del.className = 'delete-btn';
-        del.innerText = '🗑️';
-        del.onclick = () => socket.emit('delete_message', data.id);
-        div.appendChild(del);
-      }
       chatbox.appendChild(div);
       chatbox.scrollTop = chatbox.scrollHeight;
-
-      // Notification
-      notify.innerText = `New message from ${data.username}`;
-      notify.style.display = 'block';
-      setTimeout(() => notify.style.display = 'none', 2000);
     });
 
     socket.on('remove_message', (msgId) => {
@@ -175,22 +75,17 @@
       if (msgEl) msgEl.remove();
     });
 
-    socket.on('update_users', (usernames) => {
-      userList.innerHTML = '';
-      usernames.forEach(user => {
-        const li = document.createElement('li');
-        li.textContent = user;
-        userList.appendChild(li);
-      });
-    });
+    function deleteMessage(id) {
+      socket.emit('delete_message', id);
+    }
 
-    socket.on('typing', (user) => {
-      typingEl.textContent = `${user} is typing...`;
-    });
+    function muteUser(username) {
+      socket.emit('mute_user', username);
+    }
 
-    socket.on('stop_typing', () => {
-      typingEl.textContent = '';
-    });
+    function unmuteUser(username) {
+      socket.emit('unmute_user', username);
+    }
   </script>
 </body>
 </html>
