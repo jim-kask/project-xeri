@@ -26,6 +26,7 @@ with app.app_context():
 # Track online users and active sessions
 online_users = set()
 sessions = {}
+muted_users = set()
 
 @app.route('/')
 def index():
@@ -67,7 +68,6 @@ def login():
             if username in sessions:
                 return "User is already logged in elsewhere"
 
-            # Update mod flag dynamically on login
             user.mod = username in moderators
             db.session.commit()
 
@@ -95,7 +95,7 @@ def chat():
         return redirect(url_for('login'))
     user = User.query.filter_by(username=session['username']).first()
     messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
-    return render_template('chat.html', username=session['username'], messages=messages, is_mod=user.mod if user else False)
+    return render_template('chat.html', username=session['username'], messages=messages, is_mod=user.mod if user else False, muted=list(muted_users))
 
 @socketio.on('connect')
 def handle_connect():
@@ -116,6 +116,8 @@ def handle_disconnect():
 @socketio.on('chat')
 def handle_chat(msg):
     username = session.get('username', 'Anonymous')
+    if username in muted_users:
+        return
     user = User.query.filter_by(username=username).first()
     message = Message(username=username, text=msg)
     db.session.add(message)
@@ -126,7 +128,7 @@ def handle_chat(msg):
         'username': username,
         'text': msg,
         'timestamp': timestamp,
-        'mod': user.mod if user else False
+        'mod': False
     }, broadcast=True)
 
 @socketio.on('delete_message')
@@ -139,6 +141,22 @@ def delete_message(message_id):
             db.session.delete(message)
             db.session.commit()
             emit('remove_message', message_id, broadcast=True)
+
+@socketio.on('mute_user')
+def mute_user(username_to_mute):
+    username = session.get('username')
+    user = User.query.filter_by(username=username).first()
+    if user and user.mod:
+        muted_users.add(username_to_mute)
+        emit('message', f"{username_to_mute} has been muted by a moderator.", broadcast=True)
+
+@socketio.on('unmute_user')
+def unmute_user(username_to_unmute):
+    username = session.get('username')
+    user = User.query.filter_by(username=username).first()
+    if user and user.mod:
+        muted_users.discard(username_to_unmute)
+        emit('message', f"{username_to_unmute} has been unmuted by a moderator.", broadcast=True)
 
 @socketio.on('typing')
 def handle_typing():

@@ -1,49 +1,136 @@
-<!-- chat.html with delete/mute/unmute and (muted) labels -->
+<!-- chat.html with visual layout upgrade -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Chatroom</title>
   <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      grid-template-rows: auto 1fr auto;
+      grid-template-areas:
+        "sidebar header"
+        "sidebar chat"
+        "sidebar input";
+      height: 100vh;
+    }
+    .sidebar {
+      grid-area: sidebar;
+      display: flex;
+      flex-direction: column;
+      border-right: 2px solid #ccc;
+    }
+    .users, .emojis {
+      padding: 10px;
+      border-bottom: 1px solid #ccc;
+      flex: 1;
+      overflow-y: auto;
+    }
+    .chat-area {
+      grid-area: chat;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      background: white;
+    }
     .chat-message {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 4px 0;
+      border-bottom: 1px solid #eee;
     }
     .admin-controls {
       margin-left: 10px;
     }
+    .input-area {
+      grid-area: input;
+      padding: 10px;
+      border-top: 2px solid #ccc;
+      background: #fff;
+    }
+    .input-area form {
+      display: flex;
+      gap: 10px;
+    }
+    .input-area input[type="text"] {
+      flex: 1;
+      padding: 8px;
+    }
     .muted-label {
       color: red;
       font-style: italic;
+      margin-left: 5px;
+    }
+    .typing-indicator {
+      font-size: 0.9em;
+      color: gray;
+      margin-top: 4px;
+    }
+    .popup {
+      position: absolute;
+      bottom: 10px;
+      right: 20px;
+      background: #333;
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .popup.show {
+      opacity: 1;
     }
   </style>
 </head>
 <body>
-  <h1>Welcome, {{ username }}{% if is_mod %} [MOD]{% endif %}</h1>
-  <div id="chatbox">
-    {% for message in messages %}
+  <div class="container">
+    <div class="sidebar">
+      <div class="users">
+        <h3>Who is online</h3>
+        <ul id="users"></ul>
+      </div>
+      <div class="emojis">
+        <h3>Emojis</h3>
+        <!-- You can add emoji buttons here -->
+        ❤️ 👍 😀 😂 😎 🎉
+      </div>
+    </div>
+
+    <div class="chat-area" id="chatbox">
+      {% for message in messages %}
       <div class="chat-message" data-id="{{ message.id }}">
-        <span>
-          {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
-          {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
-        </span>
+        <span>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}{% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}</span>
         {% if is_mod %}
-          <span class="admin-controls">
-            <button onclick="deleteMessage({{ message.id }})">🗑️</button>
-            {% if message.username in muted %}
-              <button onclick="unmuteUser('{{ message.username }}')">🔊</button>
-            {% else %}
-              <button onclick="muteUser('{{ message.username }}')">🔇</button>
-            {% endif %}
-          </span>
+        <span class="admin-controls">
+          <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+          {% if message.username in muted %}
+          <button onclick="unmuteUser('{{ message.username }}')">🔊</button>
+          {% else %}
+          <button onclick="muteUser('{{ message.username }}')">🔇</button>
+          {% endif %}
+        </span>
         {% endif %}
       </div>
-    {% endfor %}
+      {% endfor %}
+    </div>
+
+    <div class="input-area">
+      <form id="chat-form">
+        <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+      <div class="typing-indicator" id="typing-indicator"></div>
+    </div>
   </div>
-  <form id="chat-form">
-    <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
-    <button type="submit">Send</button>
-  </form>
+
+  <div class="popup" id="popup"></div>
 
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
@@ -51,6 +138,8 @@
     const chatbox = document.getElementById('chatbox');
     const form = document.getElementById('chat-form');
     const messageInput = document.getElementById('message');
+    const typingIndicator = document.getElementById('typing-indicator');
+    const popup = document.getElementById('popup');
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -68,6 +157,7 @@
       div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
       chatbox.appendChild(div);
       chatbox.scrollTop = chatbox.scrollHeight;
+      showPopup(`${data.username} sent a message`);
     });
 
     socket.on('remove_message', (msgId) => {
@@ -85,6 +175,12 @@
 
     function unmuteUser(username) {
       socket.emit('unmute_user', username);
+    }
+
+    function showPopup(text) {
+      popup.textContent = text;
+      popup.classList.add('show');
+      setTimeout(() => popup.classList.remove('show'), 3000);
     }
   </script>
 </body>
