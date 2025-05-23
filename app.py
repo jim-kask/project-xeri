@@ -85,7 +85,7 @@ def logout():
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
-        emit('update_users', list(online_users), broadcast=True, namespace='/')
+        emit_update_users()
     session.pop('username', None)
     return redirect(url_for('index'))
 
@@ -103,7 +103,7 @@ def handle_connect():
     if username:
         online_users.add(username)
         emit('message', f"{username} joined the chat", broadcast=True)
-        emit('update_users', list(online_users), broadcast=True)
+        emit_update_users()
 
 @socketio.on('disconnect')
 def handle_disconnect():
@@ -111,7 +111,7 @@ def handle_disconnect():
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
-        emit('update_users', list(online_users), broadcast=True)
+        emit_update_users()
 
 @socketio.on('chat')
 def handle_chat(msg):
@@ -149,6 +149,7 @@ def mute_user(username_to_mute):
     if user and user.mod:
         muted_users.add(username_to_mute)
         emit('message', f"{username_to_mute} has been muted by a moderator.", broadcast=True)
+        emit_update_users()
 
 @socketio.on('unmute_user')
 def unmute_user(username_to_unmute):
@@ -157,6 +158,7 @@ def unmute_user(username_to_unmute):
     if user and user.mod:
         muted_users.discard(username_to_unmute)
         emit('message', f"{username_to_unmute} has been unmuted by a moderator.", broadcast=True)
+        emit_update_users()
 
 @socketio.on('typing')
 def handle_typing():
@@ -167,6 +169,13 @@ def handle_typing():
 @socketio.on('stop_typing')
 def handle_stop_typing():
     emit('stop_typing', broadcast=True, include_self=False)
+
+def emit_update_users():
+    for user in online_users:
+        session['username'] = user  # Temporarily simulate session context
+        u = User.query.filter_by(username=user).first()
+        socketio.emit('update_users', list(online_users), to=request.sid)
+    socketio.emit('update_users', (list(online_users), session.get('username') in moderators, list(muted_users)), broadcast=True)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

@@ -1,13 +1,31 @@
-<!-- chat.html with visual layout upgrade -->
 <!DOCTYPE html>
 <html>
 <head>
   <title>Chatroom</title>
   <style>
+    :root {
+      --bg: #f4f4f4;
+      --text: #000;
+      --sidebar: #fff;
+      --chat-bg: #fff;
+      --input-bg: #fff;
+      --popup-bg: #333;
+      --popup-text: #fff;
+    }
+    .dark-mode {
+      --bg: #121212;
+      --text: #fff;
+      --sidebar: #1e1e1e;
+      --chat-bg: #1c1c1c;
+      --input-bg: #2a2a2a;
+      --popup-bg: #444;
+      --popup-text: #fff;
+    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #f4f4f4;
+      background-color: var(--bg);
+      color: var(--text);
     }
     .container {
       display: grid;
@@ -23,6 +41,7 @@
       grid-area: sidebar;
       display: flex;
       flex-direction: column;
+      background: var(--sidebar);
       border-right: 2px solid #ccc;
     }
     .users, .emojis {
@@ -37,7 +56,7 @@
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      background: white;
+      background: var(--chat-bg);
     }
     .chat-message {
       display: flex;
@@ -53,7 +72,7 @@
       grid-area: input;
       padding: 10px;
       border-top: 2px solid #ccc;
-      background: #fff;
+      background: var(--input-bg);
     }
     .input-area form {
       display: flex;
@@ -77,8 +96,8 @@
       position: absolute;
       bottom: 10px;
       right: 20px;
-      background: #333;
-      color: #fff;
+      background: var(--popup-bg);
+      color: var(--popup-text);
       padding: 6px 12px;
       border-radius: 6px;
       opacity: 0;
@@ -87,26 +106,53 @@
     .popup.show {
       opacity: 1;
     }
+    #emoji-buttons button {
+      font-size: 20px;
+      margin: 3px;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .toggle-darkmode {
+      grid-area: header;
+      text-align: right;
+      padding: 10px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="sidebar">
       <div class="users">
-        <h3>Who is online</h3>
+        <h3>Online Users</h3>
         <ul id="users"></ul>
       </div>
       <div class="emojis">
         <h3>Emojis</h3>
-        <!-- You can add emoji buttons here -->
-        ❤️ 👍 😀 😂 😎 🎉
+        <div id="emoji-buttons">
+          <button type="button">❤️</button>
+          <button type="button">👍</button>
+          <button type="button">😀</button>
+          <button type="button">😂</button>
+          <button type="button">😎</button>
+          <button type="button">🎉</button>
+        </div>
+        <br>
+        <input type="file" id="imageUpload" accept="image/*">
       </div>
+    </div>
+
+    <div class="toggle-darkmode">
+      <button onclick="document.body.classList.toggle('dark-mode')">Toggle Dark Mode</button>
     </div>
 
     <div class="chat-area" id="chatbox">
       {% for message in messages %}
       <div class="chat-message" data-id="{{ message.id }}">
-        <span>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}{% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}</span>
+        <span>
+          {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
+          {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
+        </span>
         {% if is_mod %}
         <span class="admin-controls">
           <button onclick="deleteMessage({{ message.id }})">🗑️</button>
@@ -122,11 +168,11 @@
     </div>
 
     <div class="input-area">
+      <div class="typing-indicator" id="typing-indicator"></div>
       <form id="chat-form">
         <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
         <button type="submit">Send</button>
       </form>
-      <div class="typing-indicator" id="typing-indicator"></div>
     </div>
   </div>
 
@@ -135,11 +181,44 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
     const socket = io();
+// Add this after socket = io();
+socket.on('update_users', (users, isMod, mutedList) => {
+  const userList = document.getElementById('users');
+  userList.innerHTML = '';
+  users.forEach(user => {
+    const li = document.createElement('li');
+    li.textContent = user;
+
+    if (mutedList.includes(user)) {
+      const mutedSpan = document.createElement('span');
+      mutedSpan.className = 'muted-label';
+      mutedSpan.textContent = ' (muted)';
+      li.appendChild(mutedSpan);
+    }
+
+    if (isMod && user !== document.body.dataset.username) {
+      const btn = document.createElement('button');
+      btn.textContent = mutedList.includes(user) ? '🔊' : '🔇';
+      btn.onclick = () => {
+        if (mutedList.includes(user)) {
+          socket.emit('unmute_user', user);
+        } else {
+          socket.emit('mute_user', user);
+        }
+      };
+      li.appendChild(btn);
+    }
+
+    userList.appendChild(li);
+  });
+});
+
     const chatbox = document.getElementById('chatbox');
     const form = document.getElementById('chat-form');
     const messageInput = document.getElementById('message');
     const typingIndicator = document.getElementById('typing-indicator');
     const popup = document.getElementById('popup');
+    const imageUpload = document.getElementById('imageUpload');
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
@@ -182,6 +261,30 @@
       popup.classList.add('show');
       setTimeout(() => popup.classList.remove('show'), 3000);
     }
+
+    document.querySelectorAll('#emoji-buttons button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const emoji = btn.textContent;
+        const input = messageInput;
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.slice(0, start) + emoji + text.slice(end);
+        input.focus();
+        input.setSelectionRange(start + emoji.length, start + emoji.length);
+      });
+    });
+
+    imageUpload.addEventListener('change', () => {
+      const file = imageUpload.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          socket.emit('chat', `<img src='${e.target.result}' style='max-width:200px;'>`);
+        };
+        reader.readAsDataURL(file);
+      }
+    });
   </script>
 </body>
 </html>
