@@ -1,4 +1,4 @@
-<!-- Full updated chat.html with all requested features -->
+<!-- updated chat.html with moderator controls, notifications, and UX fixes -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -17,6 +17,35 @@
       font-size: 24px;
       margin: 0 5px;
     }
+    .notification {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: #222;
+      color: #fff;
+      padding: 10px;
+      border-radius: 5px;
+      opacity: 0.9;
+      z-index: 1000;
+      display: none;
+    }
+    .chat-message {
+      display: flex;
+      justify-content: space-between;
+    }
+    .chatbox-wrapper {
+      height: 230px;
+      overflow-y: scroll;
+      border: 1px solid gray;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+    }
+    #typing-space {
+      height: 20px;
+      font-style: italic;
+      color: gray;
+    }
   </style>
 </head>
 <body>
@@ -25,32 +54,29 @@
   <button id="darkToggle">Toggle Dark Mode</button>
 
   <div style="display: flex; gap: 20px;">
-    <!-- Online Users -->
     <div style="width: 200px; border: 1px solid black; padding: 10px;">
       <h3>Online Users</h3>
       <ul id="users"></ul>
     </div>
 
-    <!-- Chat Section -->
     <div style="flex-grow: 1; border: 1px solid black; padding: 10px;">
       <h3>Chat</h3>
-      <div id="chatbox" style="height: 200px; overflow-y: scroll; border: 1px solid gray; padding: 5px;">
+      <div id="chatbox" class="chatbox-wrapper">
         {% for message in messages %}
-          <div>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}: {{ message.text }}</div>
+          <div class="chat-message" data-id="{{ message.id }}">
+            <span>{{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}: {{ message.text|safe }}</span>
+            {% if username == 'Dimitrios' %}<button class="delete-btn">🗑️</button>{% endif %}
+          </div>
         {% endfor %}
       </div>
+      <div id="typing-space"></div>
 
-      <!-- Typing Indicator -->
-      <p id="typing" style="font-style: italic; color: gray;"></p>
-
-      <!-- Emoji Panel -->
       <div class="emoji-panel">
         <span>😀</span> <span>😍</span> <span>🤣</span>
         <span>😢</span> <span>😡</span> <span>🙌</span>
-        <span>🎉</span> <span>💏</span> <span>👍</span>
+        <span>🎉</span> <span>❤️</span> <span>👍</span>
       </div>
 
-      <!-- Chat Form -->
       <form id="chat-form">
         <input type="text" id="message" placeholder="Type message..." required autocomplete="off">
         <input type="file" id="imageInput" accept="image/*">
@@ -58,6 +84,8 @@
       </form>
     </div>
   </div>
+
+  <div class="notification" id="notify"></div>
 
   <p><a href="/logout">Logout</a></p>
 
@@ -68,12 +96,17 @@
     const messageInput = document.getElementById('message');
     const chatbox = document.getElementById('chatbox');
     const userList = document.getElementById('users');
-    const typingEl = document.getElementById('typing');
+    const typingEl = document.getElementById('typing-space');
     const emojiPanel = document.querySelector('.emoji-panel');
     const darkToggle = document.getElementById('darkToggle');
     const imageInput = document.getElementById('imageInput');
+    const notify = document.getElementById('notify');
 
-    // Restore dark mode
+    // Scroll to bottom on load
+    window.onload = () => {
+      chatbox.scrollTop = chatbox.scrollHeight;
+    };
+
     if (localStorage.getItem('darkMode') === 'on') {
       document.body.classList.add('dark-mode');
     }
@@ -91,7 +124,6 @@
     });
 
     let typingTimeout;
-
     messageInput.addEventListener('input', () => {
       socket.emit('typing');
       clearTimeout(typingTimeout);
@@ -101,7 +133,6 @@
     form.addEventListener('submit', function (e) {
       e.preventDefault();
       const msg = messageInput.value.trim();
-
       if (msg.length === 0 && !imageInput.files[0]) return;
 
       if (imageInput.files[0]) {
@@ -120,9 +151,28 @@
 
     socket.on('chat', (data) => {
       const div = document.createElement('div');
-      div.innerHTML = `${data.timestamp} - ${data.username}: ${data.text}`;
+      div.className = 'chat-message';
+      div.dataset.id = data.id;
+      div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
+      if (data.mod) {
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.innerText = '🗑️';
+        del.onclick = () => socket.emit('delete_message', data.id);
+        div.appendChild(del);
+      }
       chatbox.appendChild(div);
       chatbox.scrollTop = chatbox.scrollHeight;
+
+      // Notification
+      notify.innerText = `New message from ${data.username}`;
+      notify.style.display = 'block';
+      setTimeout(() => notify.style.display = 'none', 2000);
+    });
+
+    socket.on('remove_message', (msgId) => {
+      const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
+      if (msgEl) msgEl.remove();
     });
 
     socket.on('update_users', (usernames) => {

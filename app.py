@@ -5,6 +5,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
 from datetime import datetime
 import os
+from moderators import moderators
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -16,6 +17,11 @@ db.init_app(app)
 
 with app.app_context():
     db.create_all()
+    for mod_name in moderators:
+        mod_user = User.query.filter_by(username=mod_name).first()
+        if mod_user and not mod_user.mod:
+            mod_user.mod = True
+    db.session.commit()
 
 # Track online users and active sessions
 online_users = set()
@@ -42,7 +48,8 @@ def register():
             return "Username already exists"
 
         hashed_pw = generate_password_hash(password)
-        new_user = User(username=username, password=hashed_pw)
+        is_mod = username in moderators
+        new_user = User(username=username, password=hashed_pw, mod=is_mod)
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('login'))
@@ -59,6 +66,10 @@ def login():
         if user and check_password_hash(user.password, password):
             if username in sessions:
                 return "User is already logged in elsewhere"
+
+            # Update mod flag dynamically on login
+            user.mod = username in moderators
+            db.session.commit()
 
             session['username'] = username
             sessions[username] = True
@@ -82,8 +93,9 @@ def logout():
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
+    user = User.query.filter_by(username=session['username']).first()
     messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
-    return render_template('chat.html', username=session['username'], messages=messages)
+    return render_template('chat.html', username=session['username'], messages=messages, is_mod=user.mod if user else False)
 
 @socketio.on('connect')
 def handle_connect():
@@ -104,15 +116,29 @@ def handle_disconnect():
 @socketio.on('chat')
 def handle_chat(msg):
     username = session.get('username', 'Anonymous')
+    user = User.query.filter_by(username=username).first()
     message = Message(username=username, text=msg)
     db.session.add(message)
     db.session.commit()
     timestamp = message.timestamp.strftime('%H:%M')
     emit('chat', {
+        'id': message.id,
         'username': username,
         'text': msg,
-        'timestamp': timestamp
+        'timestamp': timestamp,
+        'mod': user.mod if user else False
     }, broadcast=True)
+
+@socketio.on('delete_message')
+def delete_message(message_id):
+    username = session.get('username')
+    user = User.query.filter_by(username=username).first()
+    if user and user.mod:
+        message = Message.query.get(message_id)
+        if message:
+            db.session.delete(message)
+            db.session.commit()
+            emit('remove_message', message_id, broadcast=True)
 
 @socketio.on('typing')
 def handle_typing():
