@@ -3,10 +3,8 @@ from flask_socketio import SocketIO, emit
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
-
+from datetime import datetime
 import os
-
-from models import db, User
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -19,6 +17,9 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 with app.app_context():
     db.create_all()
 
+# 🟢 Track online users
+online_users = set()
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -28,6 +29,9 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+
+        if len(username) < 2 or len(username) > 24:
+            return "Username must be between 2 and 24 characters"
 
         if len(password) < 8:
             return "Password must be at least 8 characters long"
@@ -61,6 +65,10 @@ def login():
 
 @app.route('/logout')
 def logout():
+    username = session.get('username')
+    if username in online_users:
+        online_users.remove(username)
+        emit('update_users', list(online_users), broadcast=True, namespace='/')
     session.pop('username', None)
     return redirect(url_for('index'))
 
@@ -73,23 +81,37 @@ def chat():
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
-    emit("message", "Καλώς τους!")
+    username = session.get('username')
+    if username:
+        online_users.add(username)
+        print(f"{username} connected")
+        emit('message', f"{username} joined the chat", broadcast=True)
+        emit('update_users', list(online_users), broadcast=True)
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    username = session.get('username')
+    if username and username in online_users:
+        online_users.remove(username)
+        print(f"{username} disconnected")
+        emit('update_users', list(online_users), broadcast=True)
 
 @socketio.on('chat')
 def handle_chat(msg):
     username = session.get('username', 'Anonymous')
-    full_msg = f"{username}: {msg}"
 
     # Save to database
     message = Message(username=username, text=msg)
     db.session.add(message)
     db.session.commit()
 
-    emit('chat', full_msg, broadcast=True)
-
+    timestamp = message.timestamp.strftime('%H:%M')
+    emit('chat', {
+        'username': username,
+        'text': msg,
+        'timestamp': timestamp
+    }, broadcast=True)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host='0.0.0.0', port=port)
-
