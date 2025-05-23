@@ -66,7 +66,7 @@
       border-bottom: 1px solid #eee;
     }
     .admin-controls {
-      margin-left: 10px;
+      display: none; /* Hidden as requested */
     }
     .input-area {
       grid-area: input;
@@ -77,6 +77,7 @@
     .input-area form {
       display: flex;
       gap: 10px;
+      align-items: flex-start;
     }
     .input-area input[type="text"] {
       flex: 1;
@@ -91,6 +92,7 @@
       font-size: 0.9em;
       color: gray;
       margin-bottom: 6px;
+      min-height: 1.2em;
     }
     .popup {
       position: absolute;
@@ -117,6 +119,19 @@
       grid-area: header;
       text-align: right;
       padding: 10px;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 6px;
+    }
+    .online {
+      background-color: green;
+    }
+    .afk {
+      background-color: red;
     }
   </style>
 </head>
@@ -153,16 +168,6 @@
           {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
           {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
         </span>
-        {% if is_mod %}
-        <span class="admin-controls">
-          <button onclick="deleteMessage({{ message.id }})">🗑️</button>
-          {% if message.username in muted %}
-          <button onclick="unmuteUser('{{ message.username }}')">🔊</button>
-          {% else %}
-          <button onclick="muteUser('{{ message.username }}')">🔇</button>
-          {% endif %}
-        </span>
-        {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -193,7 +198,12 @@
       userList.innerHTML = '';
       users.forEach(user => {
         const li = document.createElement('li');
-        li.textContent = user;
+        const dot = document.createElement('span');
+        dot.className = 'status-dot online'; // Future enhancement: make conditional for AFK
+        li.appendChild(dot);
+
+        const userText = document.createTextNode(user);
+        li.appendChild(userText);
 
         if (mutedList.includes(user)) {
           const mutedSpan = document.createElement('span');
