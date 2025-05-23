@@ -59,14 +59,17 @@
       background: var(--chat-bg);
     }
     .chat-message {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
       padding: 4px 0;
       border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
     }
-    .admin-controls {
-      display: none; /* Hidden as requested */
+    .admin-controls button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 8px;
     }
     .input-area {
       grid-area: input;
@@ -77,7 +80,6 @@
     .input-area form {
       display: flex;
       gap: 10px;
-      align-items: flex-start;
     }
     .input-area input[type="text"] {
       flex: 1;
@@ -168,6 +170,11 @@
           {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
           {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
         </span>
+        {% if is_mod %}
+        <span class="admin-controls">
+          <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+        </span>
+        {% endif %}
       </div>
       {% endfor %}
     </div>
@@ -193,34 +200,34 @@
     const popup = document.getElementById('popup');
     const imageUpload = document.getElementById('imageUpload');
 
+    window.onload = () => {
+      chatbox.scrollTop = chatbox.scrollHeight;
+    };
+
     socket.on('update_users', (users, isMod, mutedList) => {
       const userList = document.getElementById('users');
       userList.innerHTML = '';
-      users.forEach(user => {
+      users.forEach(userObj => {
         const li = document.createElement('li');
         const dot = document.createElement('span');
-        dot.className = 'status-dot online'; // Future enhancement: make conditional for AFK
+        dot.className = 'status-dot ' + (userObj.afk ? 'afk' : 'online');
         li.appendChild(dot);
 
-        const userText = document.createTextNode(user);
+        const userText = document.createTextNode(userObj.name);
         li.appendChild(userText);
 
-        if (mutedList.includes(user)) {
+        if (mutedList.includes(userObj.name)) {
           const mutedSpan = document.createElement('span');
           mutedSpan.className = 'muted-label';
           mutedSpan.textContent = ' (muted)';
           li.appendChild(mutedSpan);
         }
 
-        if (isMod && user !== document.body.dataset.username) {
+        if (isMod && userObj.name !== document.body.dataset.username) {
           const btn = document.createElement('button');
-          btn.textContent = mutedList.includes(user) ? '🔊' : '🔇';
+          btn.textContent = mutedList.includes(userObj.name) ? '🔊' : '🔇';
           btn.onclick = () => {
-            if (mutedList.includes(user)) {
-              socket.emit('unmute_user', user);
-            } else {
-              socket.emit('mute_user', user);
-            }
+            socket.emit(mutedList.includes(userObj.name) ? 'unmute_user' : 'mute_user', userObj.name);
           };
           li.appendChild(btn);
         }
@@ -272,14 +279,6 @@
 
     function deleteMessage(id) {
       socket.emit('delete_message', id);
-    }
-
-    function muteUser(username) {
-      socket.emit('mute_user', username);
-    }
-
-    function unmuteUser(username) {
-      socket.emit('unmute_user', username);
     }
 
     function showPopup(text) {

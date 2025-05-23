@@ -3,7 +3,7 @@ from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from moderators import moderators
 
@@ -23,10 +23,11 @@ with app.app_context():
             mod_user.mod = True
     db.session.commit()
 
-# Track online users and active sessions
+# Track user states
 online_users = set()
 sessions = {}
 muted_users = set()
+last_activity = {}  # username: datetime
 
 @app.route('/')
 def index():
@@ -40,12 +41,10 @@ def register():
 
         if len(username) < 2 or len(username) > 24:
             return "Username must be between 2 and 24 characters"
-
         if len(password) < 8:
             return "Password must be at least 8 characters long"
 
-        existing_user = User.query.filter_by(username=username).first()
-        if existing_user:
+        if User.query.filter_by(username=username).first():
             return "Username already exists"
 
         hashed_pw = generate_password_hash(password)
@@ -70,12 +69,10 @@ def login():
 
             user.mod = username in moderators
             db.session.commit()
-
             session['username'] = username
             sessions[username] = True
             return redirect(url_for('chat'))
-        else:
-            return "Invalid username or password"
+        return "Invalid username or password"
 
     return render_template('login.html')
 
@@ -85,6 +82,7 @@ def logout():
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
+        last_activity.pop(username, None)
         emit_update_users()
     session.pop('username', None)
     return redirect(url_for('index'))
@@ -101,7 +99,7 @@ def chat():
         messages=messages,
         is_mod=user.mod if user else False,
         muted=list(muted_users),
-        data_username=session['username']  # ✅ used for HTML <body data-username=...>
+        data_username=session['username']
     )
 
 @socketio.on('connect')
@@ -109,6 +107,7 @@ def handle_connect():
     username = session.get('username')
     if username:
         online_users.add(username)
+        last_activity[username] = datetime.utcnow()
         join_room(username)
         emit('message', f"{username} joined the chat", broadcast=True)
         emit_update_users()
@@ -119,6 +118,7 @@ def handle_disconnect():
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
+        last_activity.pop(username, None)
         leave_room(username)
         emit_update_users()
 
@@ -127,7 +127,7 @@ def handle_chat(msg):
     username = session.get('username', 'Anonymous')
     if username in muted_users:
         return
-    user = User.query.filter_by(username=username).first()
+    last_activity[username] = datetime.utcnow()
     message = Message(username=username, text=msg)
     db.session.add(message)
     db.session.commit()
@@ -173,6 +173,7 @@ def unmute_user(username_to_unmute):
 def handle_typing():
     username = session.get('username')
     if username:
+        last_activity[username] = datetime.utcnow()
         emit('typing', username, broadcast=True, include_self=False)
 
 @socketio.on('stop_typing')
@@ -180,9 +181,15 @@ def handle_stop_typing():
     emit('stop_typing', broadcast=True, include_self=False)
 
 def emit_update_users():
+    now = datetime.utcnow()
+    user_data = []
+    for user in online_users:
+        afk = (now - last_activity.get(user, now)) > timedelta(minutes=5)
+        user_data.append({'name': user, 'afk': afk})
+
     for user in online_users:
         is_mod = user in moderators
-        socketio.emit('update_users', (list(online_users), is_mod, list(muted_users)), room=user)
+        socketio.emit('update_users', (user_data, is_mod, list(muted_users)), room=user)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
