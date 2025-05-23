@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html data-username="{{ data_username }}">
 <head>
   <title>Chatroom</title>
   <style>
@@ -90,7 +90,7 @@
     .typing-indicator {
       font-size: 0.9em;
       color: gray;
-      margin-top: 4px;
+      margin-bottom: 6px;
     }
     .popup {
       position: absolute;
@@ -181,38 +181,6 @@
   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <script>
     const socket = io();
-// Add this after socket = io();
-socket.on('update_users', (users, isMod, mutedList) => {
-  const userList = document.getElementById('users');
-  userList.innerHTML = '';
-  users.forEach(user => {
-    const li = document.createElement('li');
-    li.textContent = user;
-
-    if (mutedList.includes(user)) {
-      const mutedSpan = document.createElement('span');
-      mutedSpan.className = 'muted-label';
-      mutedSpan.textContent = ' (muted)';
-      li.appendChild(mutedSpan);
-    }
-
-    if (isMod && user !== document.body.dataset.username) {
-      const btn = document.createElement('button');
-      btn.textContent = mutedList.includes(user) ? '🔊' : '🔇';
-      btn.onclick = () => {
-        if (mutedList.includes(user)) {
-          socket.emit('unmute_user', user);
-        } else {
-          socket.emit('mute_user', user);
-        }
-      };
-      li.appendChild(btn);
-    }
-
-    userList.appendChild(li);
-  });
-});
-
     const chatbox = document.getElementById('chatbox');
     const form = document.getElementById('chat-form');
     const messageInput = document.getElementById('message');
@@ -220,12 +188,60 @@ socket.on('update_users', (users, isMod, mutedList) => {
     const popup = document.getElementById('popup');
     const imageUpload = document.getElementById('imageUpload');
 
+    socket.on('update_users', (users, isMod, mutedList) => {
+      const userList = document.getElementById('users');
+      userList.innerHTML = '';
+      users.forEach(user => {
+        const li = document.createElement('li');
+        li.textContent = user;
+
+        if (mutedList.includes(user)) {
+          const mutedSpan = document.createElement('span');
+          mutedSpan.className = 'muted-label';
+          mutedSpan.textContent = ' (muted)';
+          li.appendChild(mutedSpan);
+        }
+
+        if (isMod && user !== document.body.dataset.username) {
+          const btn = document.createElement('button');
+          btn.textContent = mutedList.includes(user) ? '🔊' : '🔇';
+          btn.onclick = () => {
+            if (mutedList.includes(user)) {
+              socket.emit('unmute_user', user);
+            } else {
+              socket.emit('mute_user', user);
+            }
+          };
+          li.appendChild(btn);
+        }
+
+        userList.appendChild(li);
+      });
+    });
+
+    socket.on('typing', (username) => {
+      typingIndicator.textContent = `${username} is typing...`;
+    });
+
+    socket.on('stop_typing', () => {
+      typingIndicator.textContent = '';
+    });
+
+    messageInput.addEventListener('input', () => {
+      socket.emit('typing');
+      clearTimeout(window.typingTimeout);
+      window.typingTimeout = setTimeout(() => {
+        socket.emit('stop_typing');
+      }, 1000);
+    });
+
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const msg = messageInput.value.trim();
       if (msg) {
         socket.emit('chat', msg);
         messageInput.value = '';
+        socket.emit('stop_typing');
       }
     });
 

@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, session
-from flask_socketio import SocketIO, emit
+from flask_socketio import SocketIO, emit, join_room, leave_room
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
@@ -95,13 +95,21 @@ def chat():
         return redirect(url_for('login'))
     user = User.query.filter_by(username=session['username']).first()
     messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
-    return render_template('chat.html', username=session['username'], messages=messages, is_mod=user.mod if user else False, muted=list(muted_users))
+    return render_template(
+        'chat.html',
+        username=session['username'],
+        messages=messages,
+        is_mod=user.mod if user else False,
+        muted=list(muted_users),
+        data_username=session['username']  # ✅ used for HTML <body data-username=...>
+    )
 
 @socketio.on('connect')
 def handle_connect():
     username = session.get('username')
     if username:
         online_users.add(username)
+        join_room(username)
         emit('message', f"{username} joined the chat", broadcast=True)
         emit_update_users()
 
@@ -111,6 +119,7 @@ def handle_disconnect():
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
+        leave_room(username)
         emit_update_users()
 
 @socketio.on('chat')
@@ -172,10 +181,8 @@ def handle_stop_typing():
 
 def emit_update_users():
     for user in online_users:
-        session['username'] = user  # Temporarily simulate session context
-        u = User.query.filter_by(username=user).first()
-        socketio.emit('update_users', list(online_users), to=request.sid)
-    socketio.emit('update_users', (list(online_users), session.get('username') in moderators, list(muted_users)), broadcast=True)
+        is_mod = user in moderators
+        socketio.emit('update_users', (list(online_users), is_mod, list(muted_users)), room=user)
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
