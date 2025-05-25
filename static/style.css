@@ -54,6 +54,55 @@ h1 {
     background-color: #357ABD;
 }
 
+/* === Form Buttons === */
+button {
+    padding: 10px 20px;
+    font-size: 1em;
+    border: none;
+    border-radius: 6px;
+    background-color: #4A90E2;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+    background-color: #357ABD;
+    transform: translateY(-1px);
+}
+
+.dark-mode button {
+    background-color: #2e8df4;
+    color: white;
+}
+
+.dark-mode button:hover {
+    background-color: #1d6fc2;
+}
+
+/* === Form Fields === */
+label {
+    color: var(--text);
+    font-weight: 500;
+    display: block;
+    margin: 12px 0 4px;
+}
+
+input[type="text"],
+input[type="password"] {
+    padding: 8px;
+    width: 100%;
+    max-width: 250px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    transition: border-color 0.3s ease;
+}
+
+input:focus {
+    outline: none;
+    border-color: #4A90E2;
+}
+
 /* === Layout === */
 
 .main-layout {
