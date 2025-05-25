@@ -50,7 +50,7 @@
       <div class="input-area">
         <div class="typing-indicator" id="typing-indicator"></div>
         <form id="chat-form">
-          <textarea id="message" placeholder="Type a message..." required rows="2" style="resize: vertical;"></textarea>
+          <textarea id="message" placeholder="Type a message..." required autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
           <button type="submit">Send</button>
         </form>
       </div>
@@ -59,6 +59,12 @@
 </div>
 
 <div class="popup" id="popup"></div>
+
+<!-- Pass is_mod to JS -->
+<script>
+  document.body.dataset.username = "{{ username }}";
+  document.body.dataset.isMod = "{{ 'true' if is_mod else 'false' }}";
+</script>
 {% endblock %}
 
 {% block scripts %}
@@ -121,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1000);
   });
 
-  // Submit on Enter, but allow Shift+Enter for new line
   messageInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -143,7 +148,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.className = 'chat-message';
     div.dataset.id = data.id;
-    div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
+    let inner = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
+    if (document.body.dataset.isMod === 'true') {
+      inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;
+    }
+    div.innerHTML = inner;
     chatbox.appendChild(div);
     chatbox.scrollTop = chatbox.scrollHeight;
     showPopup(`${data.username} sent a message`);
@@ -155,7 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   function deleteMessage(id) {
-    console.log("Sending delete for message:", id); // Debug
     socket.emit('delete_message', id);
   }
 
