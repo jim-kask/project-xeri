@@ -6,10 +6,18 @@ from models import db, User, Message
 from datetime import datetime, timedelta
 import os
 from moderators import moderators
+from dotenv import load_dotenv
+load_dotenv()
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL')
+from dotenv import load_dotenv
+load_dotenv()
+
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
+
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 socketio = SocketIO(app, cors_allowed_origins="*")
