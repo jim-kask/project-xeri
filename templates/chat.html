@@ -1,35 +1,41 @@
 <!DOCTYPE html>
 <html data-username="{{ data_username }}">
 <head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <title>Chatroom</title>
   <style>
-    :root {
-      --bg: #f4f4f4;
-      --text: #000;
-      --sidebar: #fff;
-      --chat-bg: #fff;
-      --input-bg: #fff;
-      --popup-bg: #333;
-      --popup-text: #fff;
-    }
-    .dark-mode {
-      --bg: #121212;
-      --text: #fff;
-      --sidebar: #1e1e1e;
-      --chat-bg: #1c1c1c;
-      --input-bg: #2a2a2a;
-      --popup-bg: #444;
-      --popup-text: #fff;
-    }
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+      background-color: var(--bg, #f4f4f4);
+      color: var(--text, #000);
     }
-    .container {
+
+    .main-layout {
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 30px;
+      padding: 40px;
+    }
+
+    .game-box, .chat-box {
+      width: 600px;
+      height: 600px;
+      border: 3px solid #00000022;
+      border-radius: 30px;
+      background-color: #ffffffcc;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+
+    .chat-box {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-box .container {
+      flex: 1;
       display: grid;
       grid-template-columns: 200px 1fr;
       grid-template-rows: auto 1fr auto;
@@ -37,35 +43,45 @@
         "sidebar header"
         "sidebar chat"
         "sidebar input";
-      height: 100vh;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
     }
+
     .sidebar {
       grid-area: sidebar;
       display: flex;
       flex-direction: column;
-      background: var(--sidebar);
+      background: var(--sidebar, #fff);
       border-right: 2px solid #ccc;
+      min-height: 0;
     }
+
     .users, .emojis {
       padding: 10px;
       border-bottom: 1px solid #ccc;
       flex: 1;
       overflow-y: auto;
+      min-height: 0;
     }
+
     .chat-area {
       grid-area: chat;
       padding: 10px;
       display: flex;
       flex-direction: column;
       overflow-y: auto;
-      background: var(--chat-bg);
+      background: var(--chat-bg, #fff);
+      min-height: 0;
     }
+
     .chat-message {
       padding: 4px 0;
       border-bottom: 1px solid #eee;
       display: flex;
       justify-content: space-between;
     }
+
     .admin-controls button {
       background: none;
       border: none;
@@ -73,45 +89,53 @@
       font-size: 16px;
       margin-left: 8px;
     }
+
     .input-area {
       grid-area: input;
       padding: 10px;
       border-top: 2px solid #ccc;
-      background: var(--input-bg);
+      background: var(--input-bg, #fff);
     }
+
     .input-area form {
       display: flex;
       gap: 10px;
     }
+
     .input-area input[type="text"] {
       flex: 1;
       padding: 8px;
     }
-    .muted-label {
-      color: red;
-      font-style: italic;
-      margin-left: 5px;
-    }
+
     .typing-indicator {
       font-size: 0.9em;
       color: gray;
       margin-bottom: 6px;
       min-height: 1.2em;
     }
+
+    .muted-label {
+      color: red;
+      font-style: italic;
+      margin-left: 5px;
+    }
+
     .popup {
       position: absolute;
       bottom: 10px;
       right: 20px;
-      background: var(--popup-bg);
-      color: var(--popup-text);
+      background: var(--popup-bg, #333);
+      color: var(--popup-text, #fff);
       padding: 6px 12px;
       border-radius: 6px;
       opacity: 0;
       transition: opacity 0.3s;
     }
+
     .popup.show {
       opacity: 1;
     }
+
     #emoji-buttons button {
       font-size: 20px;
       margin: 3px;
@@ -119,11 +143,13 @@
       background: none;
       border: none;
     }
+
     .toggle-darkmode {
       grid-area: header;
       text-align: right;
       padding: 10px;
     }
+
     .status-dot {
       display: inline-block;
       width: 10px;
@@ -131,62 +157,72 @@
       border-radius: 50%;
       margin-right: 6px;
     }
+
     .online {
       background-color: green;
     }
+
     .afk {
       background-color: red;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar">
-      <div class="users">
-        <h3>Online Users</h3>
-        <ul id="users"></ul>
-      </div>
-      <div class="emojis">
-        <h3>Emojis</h3>
-        <div id="emoji-buttons">
-          <button type="button">❤️</button>
-          <button type="button">👍</button>
-          <button type="button">😀</button>
-          <button type="button">😂</button>
-          <button type="button">😎</button>
-          <button type="button">🎉</button>
+  <div class="main-layout">
+    <!-- Game Placeholder -->
+    <div class="game-box"></div>
+
+    <!-- Chat Box -->
+    <div class="chat-box">
+      <div class="container">
+        <div class="sidebar">
+          <div class="users">
+            <h3>Online Users</h3>
+            <ul id="users"></ul>
+          </div>
+          <div class="emojis">
+            <h3>Emojis</h3>
+            <div id="emoji-buttons">
+              <button type="button">❤️</button>
+              <button type="button">👍</button>
+              <button type="button">😀</button>
+              <button type="button">😂</button>
+              <button type="button">😎</button>
+              <button type="button">🎉</button>
+            </div>
+            <br>
+            <input type="file" id="imageUpload" accept="image/*">
+          </div>
         </div>
-        <br>
-        <input type="file" id="imageUpload" accept="image/*">
+
+        <div class="toggle-darkmode">
+          <button onclick="document.body.classList.toggle('dark-mode')">Toggle Dark Mode</button>
+        </div>
+
+        <div class="chat-area" id="chatbox">
+          {% for message in messages %}
+          <div class="chat-message" data-id="{{ message.id }}">
+            <span>
+              {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
+              {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
+            </span>
+            {% if is_mod %}
+            <span class="admin-controls">
+              <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+            </span>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="input-area">
+          <div class="typing-indicator" id="typing-indicator"></div>
+          <form id="chat-form">
+            <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
+            <button type="submit">Send</button>
+          </form>
+        </div>
       </div>
-    </div>
-
-    <div class="toggle-darkmode">
-      <button onclick="document.body.classList.toggle('dark-mode')">Toggle Dark Mode</button>
-    </div>
-
-    <div class="chat-area" id="chatbox">
-      {% for message in messages %}
-      <div class="chat-message" data-id="{{ message.id }}">
-        <span>
-          {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
-          {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
-        </span>
-        {% if is_mod %}
-        <span class="admin-controls">
-          <button onclick="deleteMessage({{ message.id }})">🗑️</button>
-        </span>
-        {% endif %}
-      </div>
-      {% endfor %}
-    </div>
-
-    <div class="input-area">
-      <div class="typing-indicator" id="typing-indicator"></div>
-      <form id="chat-form">
-        <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
-        <button type="submit">Send</button>
-      </form>
     </div>
   </div>
 

@@ -1,4 +1,3 @@
- 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(to right, #f0f2f5, #c9d6ff);
@@ -30,4 +29,29 @@ h1 {
 
 .link-button:hover {
     background-color: #357ABD;
+}
+
+/* === Chat + Game Layout Additions === */
+
+.main-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 30px;
+    padding: 40px;
+}
+
+.game-box, .chat-box {
+    width: 600px;
+    height: 600px;
+    border: 3px solid #00000022;
+    border-radius: 30px;
+    background-color: #ffffffcc;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.chat-box {
+    display: flex;
+    flex-direction: column;
 }
