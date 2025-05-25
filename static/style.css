@@ -161,14 +161,40 @@ input:focus {
     min-height: 0;
 }
 
+/* Mute/unmute button inside sidebar */
+.sidebar button {
+    background-color: transparent;
+    color: var(--text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    padding: 4px 8px;
+    margin-left: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.sidebar button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .sidebar button {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .sidebar button:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
 .chat-area {
     grid-area: chat;
     padding: 10px;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    overflow-x: hidden;
     background: var(--chat-bg);
     min-height: 0;
+    word-wrap: break-word;
 }
 
 .input-area {
@@ -176,6 +202,7 @@ input:focus {
     padding: 10px;
     border-top: 2px solid #ccc;
     background: var(--input-bg);
+    overflow: hidden;
 }
 
 .input-area form {
@@ -195,6 +222,8 @@ input:focus {
     border-bottom: 1px solid #eee;
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    word-break: break-word;
 }
 
 .admin-controls button {
@@ -268,10 +297,17 @@ input:focus {
     position: absolute;
     top: 20px;
     right: 20px;
-    background: none;
+    background: transparent;
     border: none;
     font-size: 24px;
+    padding: 8px;
+    border-radius: 12px;
     cursor: pointer;
-    transition: transform 0.3s ease;
     color: var(--text);
+    transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.dark-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.08);
+    transform: scale(1.05);
 }
