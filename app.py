@@ -15,6 +15,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
 
+# Initialize DB and mark moderators
 with app.app_context():
     db.create_all()
     for mod_name in moderators:
@@ -23,15 +24,17 @@ with app.app_context():
             mod_user.mod = True
     db.session.commit()
 
-# Track user states
+# Global in-memory tracking
 online_users = set()
 sessions = {}
 muted_users = set()
 last_activity = {}  # username: datetime
 
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -43,7 +46,6 @@ def register():
             return "Username must be between 2 and 24 characters"
         if len(password) < 8:
             return "Password must be at least 8 characters long"
-
         if User.query.filter_by(username=username).first():
             return "Username already exists"
 
@@ -55,6 +57,7 @@ def register():
         return redirect(url_for('login'))
 
     return render_template('register.html')
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -76,6 +79,7 @@ def login():
 
     return render_template('login.html')
 
+
 @app.route('/logout')
 def logout():
     username = session.get('username')
@@ -87,12 +91,15 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
+
 @app.route('/chat')
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
+
     user = User.query.filter_by(username=session['username']).first()
     messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
+
     return render_template(
         'chat.html',
         username=session['username'],
@@ -101,6 +108,9 @@ def chat():
         muted=list(muted_users),
         data_username=session['username']
     )
+
+
+# === Socket.IO Events ===
 
 @socketio.on('connect')
 def handle_connect():
@@ -112,6 +122,7 @@ def handle_connect():
         emit('message', f"{username} joined the chat", broadcast=True)
         emit_update_users()
 
+
 @socketio.on('disconnect')
 def handle_disconnect():
     username = session.get('username')
@@ -121,6 +132,7 @@ def handle_disconnect():
         last_activity.pop(username, None)
         leave_room(username)
         emit_update_users()
+
 
 @socketio.on('chat')
 def handle_chat(msg):
@@ -140,6 +152,7 @@ def handle_chat(msg):
         'mod': False
     }, broadcast=True)
 
+
 @socketio.on('delete_message')
 def delete_message(message_id):
     username = session.get('username')
@@ -151,6 +164,7 @@ def delete_message(message_id):
             db.session.commit()
             emit('remove_message', message_id, broadcast=True)
 
+
 @socketio.on('mute_user')
 def mute_user(username_to_mute):
     username = session.get('username')
@@ -159,6 +173,7 @@ def mute_user(username_to_mute):
         muted_users.add(username_to_mute)
         emit('message', f"{username_to_mute} has been muted by a moderator.", broadcast=True)
         emit_update_users()
+
 
 @socketio.on('unmute_user')
 def unmute_user(username_to_unmute):
@@ -169,6 +184,7 @@ def unmute_user(username_to_unmute):
         emit('message', f"{username_to_unmute} has been unmuted by a moderator.", broadcast=True)
         emit_update_users()
 
+
 @socketio.on('typing')
 def handle_typing():
     username = session.get('username')
@@ -176,9 +192,13 @@ def handle_typing():
         last_activity[username] = datetime.utcnow()
         emit('typing', username, broadcast=True, include_self=False)
 
+
 @socketio.on('stop_typing')
 def handle_stop_typing():
     emit('stop_typing', broadcast=True, include_self=False)
+
+
+# === Utility ===
 
 def emit_update_users():
     now = datetime.utcnow()
@@ -190,6 +210,9 @@ def emit_update_users():
     for user in online_users:
         is_mod = user in moderators
         socketio.emit('update_users', (user_data, is_mod, list(muted_users)), room=user)
+
+
+# === Start Server ===
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))

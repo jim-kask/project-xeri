@@ -1,11 +1,8 @@
-<!DOCTYPE html>
-<html>
-<head>
-<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+{% extends 'base.html' %}
 
-  <title>Register</title>
-</head>
-<body>
+{% block title %}Register{% endblock %}
+
+{% block content %}
   <h1>Register</h1>
   <form action="/register" method="POST">
     <label>Username: <input type="text" name="username" required></label><br>
@@ -13,5 +10,4 @@
     <button type="submit">Register</button>
   </form>
   <p><a href="/">Back to Home</a></p>
-</body>
-</html>
+{% endblock %}

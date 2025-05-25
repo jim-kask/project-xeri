@@ -1,17 +1,40 @@
+:root {
+    --bg: linear-gradient(to right, #f0f2f5, #c9d6ff);
+    --text: #000;
+    --sidebar: #fff;
+    --chat-bg: #fff;
+    --input-bg: #fff;
+    --popup-bg: #333;
+    --popup-text: #fff;
+    --transition: 0.4s ease;
+}
+
+.dark-mode {
+    --bg: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    --text: #c9d1d9;
+    --sidebar: #161b22;
+    --chat-bg: #161b22;
+    --input-bg: #0d1117;
+    --popup-bg: #21262d;
+    --popup-text: #c9d1d9;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(to right, #f0f2f5, #c9d6ff);
+    background: var(--bg);
+    color: var(--text);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     height: 100vh;
     margin: 0;
+    transition: background var(--transition), color var(--transition);
 }
 
 h1 {
     font-size: 3em;
-    color: #333;
+    color: var(--text);
     margin-bottom: 20px;
 }
 
@@ -54,4 +77,24 @@ h1 {
 .chat-box {
     display: flex;
     flex-direction: column;
+}
+
+.chat-area,
+.sidebar,
+.input-area {
+    transition: background-color var(--transition), color var(--transition);
+}
+
+/* === Dark Mode Toggle Button === */
+
+.dark-toggle-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+    color: var(--text);
 }

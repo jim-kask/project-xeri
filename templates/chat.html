@@ -1,353 +1,187 @@
-<!DOCTYPE html>
-<html data-username="{{ data_username }}">
-<head>
-  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  <title>Chatroom</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: var(--bg, #f4f4f4);
-      color: var(--text, #000);
-    }
+{% extends 'base.html' %}
 
-    .main-layout {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      gap: 30px;
-      padding: 40px;
-    }
+{% block title %}Chatroom{% endblock %}
 
-    .game-box, .chat-box {
-      width: 600px;
-      height: 600px;
-      border: 3px solid #00000022;
-      border-radius: 30px;
-      background-color: #ffffffcc;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
+{% block content %}
+<div class="main-layout">
+  <!-- Game Placeholder -->
+  <div class="game-box"></div>
 
-    .chat-box {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-box .container {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 200px 1fr;
-      grid-template-rows: auto 1fr auto;
-      grid-template-areas:
-        "sidebar header"
-        "sidebar chat"
-        "sidebar input";
-      height: 100%;
-      min-height: 0;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      grid-area: sidebar;
-      display: flex;
-      flex-direction: column;
-      background: var(--sidebar, #fff);
-      border-right: 2px solid #ccc;
-      min-height: 0;
-    }
-
-    .users, .emojis {
-      padding: 10px;
-      border-bottom: 1px solid #ccc;
-      flex: 1;
-      overflow-y: auto;
-      min-height: 0;
-    }
-
-    .chat-area {
-      grid-area: chat;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      overflow-y: auto;
-      background: var(--chat-bg, #fff);
-      min-height: 0;
-    }
-
-    .chat-message {
-      padding: 4px 0;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .admin-controls button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 16px;
-      margin-left: 8px;
-    }
-
-    .input-area {
-      grid-area: input;
-      padding: 10px;
-      border-top: 2px solid #ccc;
-      background: var(--input-bg, #fff);
-    }
-
-    .input-area form {
-      display: flex;
-      gap: 10px;
-    }
-
-    .input-area input[type="text"] {
-      flex: 1;
-      padding: 8px;
-    }
-
-    .typing-indicator {
-      font-size: 0.9em;
-      color: gray;
-      margin-bottom: 6px;
-      min-height: 1.2em;
-    }
-
-    .muted-label {
-      color: red;
-      font-style: italic;
-      margin-left: 5px;
-    }
-
-    .popup {
-      position: absolute;
-      bottom: 10px;
-      right: 20px;
-      background: var(--popup-bg, #333);
-      color: var(--popup-text, #fff);
-      padding: 6px 12px;
-      border-radius: 6px;
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-
-    .popup.show {
-      opacity: 1;
-    }
-
-    #emoji-buttons button {
-      font-size: 20px;
-      margin: 3px;
-      cursor: pointer;
-      background: none;
-      border: none;
-    }
-
-    .toggle-darkmode {
-      grid-area: header;
-      text-align: right;
-      padding: 10px;
-    }
-
-    .status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 6px;
-    }
-
-    .online {
-      background-color: green;
-    }
-
-    .afk {
-      background-color: red;
-    }
-  </style>
-</head>
-<body>
-  <div class="main-layout">
-    <!-- Game Placeholder -->
-    <div class="game-box"></div>
-
-    <!-- Chat Box -->
-    <div class="chat-box">
-      <div class="container">
-        <div class="sidebar">
-          <div class="users">
-            <h3>Online Users</h3>
-            <ul id="users"></ul>
+  <!-- Chat Box -->
+  <div class="chat-box">
+    <div class="container">
+      <div class="sidebar">
+        <div class="users">
+          <h3>Online Users</h3>
+          <ul id="users"></ul>
+        </div>
+        <div class="emojis">
+          <h3>Emojis</h3>
+          <div id="emoji-buttons">
+            <button type="button">❤️</button>
+            <button type="button">👍</button>
+            <button type="button">😀</button>
+            <button type="button">😂</button>
+            <button type="button">😎</button>
+            <button type="button">🎉</button>
           </div>
-          <div class="emojis">
-            <h3>Emojis</h3>
-            <div id="emoji-buttons">
-              <button type="button">❤️</button>
-              <button type="button">👍</button>
-              <button type="button">😀</button>
-              <button type="button">😂</button>
-              <button type="button">😎</button>
-              <button type="button">🎉</button>
-            </div>
-            <br>
-            <input type="file" id="imageUpload" accept="image/*">
-          </div>
+          <br>
+          <input type="file" id="imageUpload" accept="image/*">
         </div>
+      </div>
 
-        <div class="toggle-darkmode">
-          <button onclick="document.body.classList.toggle('dark-mode')">Toggle Dark Mode</button>
+      <div class="chat-area" id="chatbox">
+        {% for message in messages %}
+        <div class="chat-message" data-id="{{ message.id }}">
+          <span>
+            {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
+            {% if message.username in muted %}
+              <span class="muted-label">(muted)</span>
+            {% endif %}: {{ message.text|safe }}
+          </span>
+          {% if is_mod %}
+          <span class="admin-controls">
+            <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+          </span>
+          {% endif %}
         </div>
+        {% endfor %}
+      </div>
 
-        <div class="chat-area" id="chatbox">
-          {% for message in messages %}
-          <div class="chat-message" data-id="{{ message.id }}">
-            <span>
-              {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
-              {% if message.username in muted %}<span class="muted-label">(muted)</span>{% endif %}: {{ message.text|safe }}
-            </span>
-            {% if is_mod %}
-            <span class="admin-controls">
-              <button onclick="deleteMessage({{ message.id }})">🗑️</button>
-            </span>
-            {% endif %}
-          </div>
-          {% endfor %}
-        </div>
-
-        <div class="input-area">
-          <div class="typing-indicator" id="typing-indicator"></div>
-          <form id="chat-form">
-            <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
-            <button type="submit">Send</button>
-          </form>
-        </div>
+      <div class="input-area">
+        <div class="typing-indicator" id="typing-indicator"></div>
+        <form id="chat-form">
+          <input type="text" id="message" placeholder="Type a message..." required autocomplete="off">
+          <button type="submit">Send</button>
+        </form>
       </div>
     </div>
   </div>
+</div>
 
-  <div class="popup" id="popup"></div>
+<div class="popup" id="popup"></div>
+{% endblock %}
 
-  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-  <script>
-    const socket = io();
-    const chatbox = document.getElementById('chatbox');
-    const form = document.getElementById('chat-form');
-    const messageInput = document.getElementById('message');
-    const typingIndicator = document.getElementById('typing-indicator');
-    const popup = document.getElementById('popup');
-    const imageUpload = document.getElementById('imageUpload');
+{% block scripts %}
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  const chatbox = document.getElementById('chatbox');
+  const form = document.getElementById('chat-form');
+  const messageInput = document.getElementById('message');
+  const typingIndicator = document.getElementById('typing-indicator');
+  const popup = document.getElementById('popup');
+  const imageUpload = document.getElementById('imageUpload');
 
-    window.onload = () => {
-      chatbox.scrollTop = chatbox.scrollHeight;
-    };
+  window.onload = () => {
+    chatbox.scrollTop = chatbox.scrollHeight;
+  };
 
-    socket.on('update_users', (users, isMod, mutedList) => {
-      const userList = document.getElementById('users');
-      userList.innerHTML = '';
-      users.forEach(userObj => {
-        const li = document.createElement('li');
-        const dot = document.createElement('span');
-        dot.className = 'status-dot ' + (userObj.afk ? 'afk' : 'online');
-        li.appendChild(dot);
+  socket.on('update_users', (users, isMod, mutedList) => {
+    const userList = document.getElementById('users');
+    userList.innerHTML = '';
+    users.forEach(userObj => {
+      const li = document.createElement('li');
+      const dot = document.createElement('span');
+      dot.className = 'status-dot ' + (userObj.afk ? 'afk' : 'online');
+      li.appendChild(dot);
 
-        const userText = document.createTextNode(userObj.name);
-        li.appendChild(userText);
+      const userText = document.createTextNode(userObj.name);
+      li.appendChild(userText);
 
-        if (mutedList.includes(userObj.name)) {
-          const mutedSpan = document.createElement('span');
-          mutedSpan.className = 'muted-label';
-          mutedSpan.textContent = ' (muted)';
-          li.appendChild(mutedSpan);
-        }
-
-        if (isMod && userObj.name !== document.body.dataset.username) {
-          const btn = document.createElement('button');
-          btn.textContent = mutedList.includes(userObj.name) ? '🔊' : '🔇';
-          btn.onclick = () => {
-            socket.emit(mutedList.includes(userObj.name) ? 'unmute_user' : 'mute_user', userObj.name);
-          };
-          li.appendChild(btn);
-        }
-
-        userList.appendChild(li);
-      });
-    });
-
-    socket.on('typing', (username) => {
-      typingIndicator.textContent = `${username} is typing...`;
-    });
-
-    socket.on('stop_typing', () => {
-      typingIndicator.textContent = '';
-    });
-
-    messageInput.addEventListener('input', () => {
-      socket.emit('typing');
-      clearTimeout(window.typingTimeout);
-      window.typingTimeout = setTimeout(() => {
-        socket.emit('stop_typing');
-      }, 1000);
-    });
-
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const msg = messageInput.value.trim();
-      if (msg) {
-        socket.emit('chat', msg);
-        messageInput.value = '';
-        socket.emit('stop_typing');
+      if (mutedList.includes(userObj.name)) {
+        const mutedSpan = document.createElement('span');
+        mutedSpan.className = 'muted-label';
+        mutedSpan.textContent = ' (muted)';
+        li.appendChild(mutedSpan);
       }
-    });
 
-    socket.on('chat', (data) => {
-      const div = document.createElement('div');
-      div.className = 'chat-message';
-      div.dataset.id = data.id;
-      div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
-      chatbox.appendChild(div);
-      chatbox.scrollTop = chatbox.scrollHeight;
-      showPopup(`${data.username} sent a message`);
-    });
-
-    socket.on('remove_message', (msgId) => {
-      const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
-      if (msgEl) msgEl.remove();
-    });
-
-    function deleteMessage(id) {
-      socket.emit('delete_message', id);
-    }
-
-    function showPopup(text) {
-      popup.textContent = text;
-      popup.classList.add('show');
-      setTimeout(() => popup.classList.remove('show'), 3000);
-    }
-
-    document.querySelectorAll('#emoji-buttons button').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const emoji = btn.textContent;
-        const input = messageInput;
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        const text = input.value;
-        input.value = text.slice(0, start) + emoji + text.slice(end);
-        input.focus();
-        input.setSelectionRange(start + emoji.length, start + emoji.length);
-      });
-    });
-
-    imageUpload.addEventListener('change', () => {
-      const file = imageUpload.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          socket.emit('chat', `<img src='${e.target.result}' style='max-width:200px;'>`);
+      if (isMod && userObj.name !== document.body.dataset.username) {
+        const btn = document.createElement('button');
+        btn.textContent = mutedList.includes(userObj.name) ? '🔊' : '🔇';
+        btn.onclick = () => {
+          socket.emit(mutedList.includes(userObj.name) ? 'unmute_user' : 'mute_user', userObj.name);
         };
-        reader.readAsDataURL(file);
+        li.appendChild(btn);
       }
+
+      userList.appendChild(li);
     });
-  </script>
-</body>
-</html>
+  });
+
+  socket.on('typing', (username) => {
+    typingIndicator.textContent = `${username} is typing...`;
+  });
+
+  socket.on('stop_typing', () => {
+    typingIndicator.textContent = '';
+  });
+
+  messageInput.addEventListener('input', () => {
+    socket.emit('typing');
+    clearTimeout(window.typingTimeout);
+    window.typingTimeout = setTimeout(() => {
+      socket.emit('stop_typing');
+    }, 1000);
+  });
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const msg = messageInput.value.trim();
+    if (msg) {
+      socket.emit('chat', msg);
+      messageInput.value = '';
+      socket.emit('stop_typing');
+    }
+  });
+
+  socket.on('chat', (data) => {
+    const div = document.createElement('div');
+    div.className = 'chat-message';
+    div.dataset.id = data.id;
+    div.innerHTML = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
+    chatbox.appendChild(div);
+    chatbox.scrollTop = chatbox.scrollHeight;
+    showPopup(`${data.username} sent a message`);
+  });
+
+  socket.on('remove_message', (msgId) => {
+    const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
+    if (msgEl) msgEl.remove();
+  });
+
+  function deleteMessage(id) {
+    socket.emit('delete_message', id);
+  }
+
+  function showPopup(text) {
+    popup.textContent = text;
+    popup.classList.add('show');
+    setTimeout(() => popup.classList.remove('show'), 3000);
+  }
+
+  document.querySelectorAll('#emoji-buttons button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const emoji = btn.textContent;
+      const input = messageInput;
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.slice(0, start) + emoji + text.slice(end);
+      input.focus();
+      input.setSelectionRange(start + emoji.length, start + emoji.length);
+    });
+  });
+
+  imageUpload.addEventListener('change', () => {
+    const file = imageUpload.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        socket.emit('chat', `<img src='${e.target.result}' style='max-width:200px;'>`);
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+</script>
+{% endblock %}
