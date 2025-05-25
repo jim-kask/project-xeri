@@ -6,25 +6,18 @@ from models import db, User, Message
 from datetime import datetime, timedelta
 import os
 from moderators import moderators
-from dotenv import load_dotenv
-
-# ✅ Load environment variables from .env (for local dev)
-load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 
-# ✅ Use DATABASE_URL from env (Railway sets this automatically in production)
+# ✅ Railway sets this automatically
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-# 🐛 Debug only (remove later)
-print("Database URI in use:", app.config['SQLALCHEMY_DATABASE_URI'])
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
 
-# Initialize DB and mark moderators
+# === Initialize DB and assign mod flags ===
 with app.app_context():
     db.create_all()
     for mod_name in moderators:
@@ -33,11 +26,11 @@ with app.app_context():
             mod_user.mod = True
     db.session.commit()
 
-# Global in-memory tracking
+# === Global State ===
 online_users = set()
 sessions = {}
 muted_users = set()
-last_activity = {}  # username: datetime
+last_activity = {}
 
 @app.route('/')
 def index():
