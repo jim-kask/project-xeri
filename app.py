@@ -9,7 +9,7 @@ from moderators import moderators
 from dotenv import load_dotenv
 load_dotenv()
 
-print("Database URI in use:", app.config['SQLALCHEMY_DATABASE_URI'])
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -20,6 +20,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
 
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+print("Database URI in use:", app.config['SQLALCHEMY_DATABASE_URI'])
+
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
