@@ -7,22 +7,19 @@ from datetime import datetime, timedelta
 import os
 from moderators import moderators
 from dotenv import load_dotenv
+
+# ✅ Load environment variables from .env (for local dev)
 load_dotenv()
-
-
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
-from dotenv import load_dotenv
-load_dotenv()
 
-app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv("DATABASE_URL")
-
-
+# ✅ Use DATABASE_URL from env (Railway sets this automatically in production)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+# 🐛 Debug only (remove later)
 print("Database URI in use:", app.config['SQLALCHEMY_DATABASE_URI'])
-
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
@@ -42,11 +39,9 @@ sessions = {}
 muted_users = set()
 last_activity = {}  # username: datetime
 
-
 @app.route('/')
 def index():
     return render_template('index.html')
-
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -70,7 +65,6 @@ def register():
 
     return render_template('register.html')
 
-
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -91,7 +85,6 @@ def login():
 
     return render_template('login.html')
 
-
 @app.route('/logout')
 def logout():
     username = session.get('username')
@@ -103,14 +96,13 @@ def logout():
     session.pop('username', None)
     return redirect(url_for('index'))
 
-
 @app.route('/chat')
 def chat():
     if 'username' not in session:
         return redirect(url_for('login'))
 
     user = User.query.filter_by(username=session['username']).first()
-    messages = Message.query.order_by(Message.timestamp.asc()).limit(50).all()
+    messages = Message.query.order_by(Message.timestamp.asc()).limit(500).all()
 
     return render_template(
         'chat.html',
@@ -120,7 +112,6 @@ def chat():
         muted=list(muted_users),
         data_username=session['username']
     )
-
 
 # === Socket.IO Events ===
 
@@ -134,7 +125,6 @@ def handle_connect():
         emit('message', f"{username} joined the chat", broadcast=True)
         emit_update_users()
 
-
 @socketio.on('disconnect')
 def handle_disconnect():
     username = session.get('username')
@@ -144,7 +134,6 @@ def handle_disconnect():
         last_activity.pop(username, None)
         leave_room(username)
         emit_update_users()
-
 
 @socketio.on('chat')
 def handle_chat(msg):
@@ -164,7 +153,6 @@ def handle_chat(msg):
         'mod': False
     }, broadcast=True)
 
-
 @socketio.on('delete_message')
 def delete_message(message_id):
     username = session.get('username')
@@ -176,7 +164,6 @@ def delete_message(message_id):
             db.session.commit()
             emit('remove_message', message_id, broadcast=True)
 
-
 @socketio.on('mute_user')
 def mute_user(username_to_mute):
     username = session.get('username')
@@ -185,7 +172,6 @@ def mute_user(username_to_mute):
         muted_users.add(username_to_mute)
         emit('message', f"{username_to_mute} has been muted by a moderator.", broadcast=True)
         emit_update_users()
-
 
 @socketio.on('unmute_user')
 def unmute_user(username_to_unmute):
@@ -196,7 +182,6 @@ def unmute_user(username_to_unmute):
         emit('message', f"{username_to_unmute} has been unmuted by a moderator.", broadcast=True)
         emit_update_users()
 
-
 @socketio.on('typing')
 def handle_typing():
     username = session.get('username')
@@ -204,11 +189,9 @@ def handle_typing():
         last_activity[username] = datetime.utcnow()
         emit('typing', username, broadcast=True, include_self=False)
 
-
 @socketio.on('stop_typing')
 def handle_stop_typing():
     emit('stop_typing', broadcast=True, include_self=False)
-
 
 # === Utility ===
 
@@ -222,7 +205,6 @@ def emit_update_users():
     for user in online_users:
         is_mod = user in moderators
         socketio.emit('update_users', (user_data, is_mod, list(muted_users)), room=user)
-
 
 # === Start Server ===
 
