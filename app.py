@@ -9,6 +9,7 @@ from moderators import moderators
 from dotenv import load_dotenv
 load_dotenv()
 
+print("Database URI in use:", app.config['SQLALCHEMY_DATABASE_URI'])
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
