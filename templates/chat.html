@@ -10,6 +10,7 @@
   <!-- Chat Box -->
   <div class="chat-box">
     <div class="container">
+      <!-- Sidebar -->
       <div class="sidebar">
         <div class="users">
           <h3>Online Users</h3>
@@ -30,6 +31,7 @@
         </div>
       </div>
 
+      <!-- Chat messages -->
       <div class="chat-area" id="chatbox">
         {% for message in messages %}
         <div class="chat-message" data-id="{{ message.id }}">
@@ -48,6 +50,7 @@
         {% endfor %}
       </div>
 
+      <!-- Input -->
       <div class="input-area">
         <div class="typing-indicator" id="typing-indicator"></div>
         <form id="chat-form">
@@ -85,9 +88,7 @@
       const dot = document.createElement('span');
       dot.className = 'status-dot ' + (userObj.afk ? 'afk' : 'online');
       li.appendChild(dot);
-
-      const userText = document.createTextNode(userObj.name);
-      li.appendChild(userText);
+      li.appendChild(document.createTextNode(userObj.name));
 
       if (mutedList.includes(userObj.name)) {
         const mutedSpan = document.createElement('span');
