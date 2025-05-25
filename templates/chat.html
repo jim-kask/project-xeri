@@ -33,6 +33,7 @@
 
       <!-- Chat messages -->
       <div class="chat-area" id="chatbox">
+        <p style="color:red;">Messages loaded: {{ messages|length }}</p> <!-- Debug line -->
         {% for message in messages %}
         <div class="chat-message" data-id="{{ message.id }}">
           <span>
@@ -68,6 +69,7 @@
 {% block scripts %}
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
   const chatbox = document.getElementById('chatbox');
   const form = document.getElementById('chat-form');
@@ -76,9 +78,7 @@
   const popup = document.getElementById('popup');
   const imageUpload = document.getElementById('imageUpload');
 
-  window.onload = () => {
-    chatbox.scrollTop = chatbox.scrollHeight;
-  };
+  chatbox.scrollTop = chatbox.scrollHeight;
 
   socket.on('update_users', (users, isMod, mutedList) => {
     const userList = document.getElementById('users');
@@ -184,5 +184,6 @@
       reader.readAsDataURL(file);
     }
   });
+});
 </script>
 {% endblock %}
