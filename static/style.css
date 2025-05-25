@@ -314,3 +314,18 @@ input:focus {
 .dark-mode .dark-toggle-btn:hover {
     background-color: rgba(255, 255, 255, 0.08); /* ✅ subtle in dark */
 }
+
+.back-link {
+    font-size: 1em;
+    margin-top: 20px;
+    text-decoration: none;
+    color: var(--text); /* Adapts to light/dark mode */
+    transition: color 0.3s ease;
+    display: inline-block;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+    color: #4A90E2; /* Same highlight as buttons */
+}
+
