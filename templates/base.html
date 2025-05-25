@@ -1,4 +1,3 @@
- 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,7 +6,10 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% block head %}{% endblock %}
 </head>
-<body>
+
+<!-- ✅ Pass username as a data attribute to <body> -->
+<body data-username="{{ username|default('') }}">
+
   <!-- 🌗 Dark Mode Toggle -->
   <button class="dark-toggle-btn" id="darkToggle" title="Toggle Dark Mode">🌙</button>
 

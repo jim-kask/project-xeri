@@ -142,13 +142,15 @@ def handle_chat(msg):
     db.session.add(message)
     db.session.commit()
     timestamp = message.timestamp.strftime('%H:%M')
-    emit('chat', {
-        'id': message.id,
-        'username': username,
-        'text': msg,
-        'timestamp': timestamp,
-        'mod': False
-    }, broadcast=True)
+    user = User.query.filter_by(username=username).first()
+emit('chat', {
+    'id': message.id,
+    'username': username,
+    'text': msg,
+    'timestamp': timestamp,
+    'mod': user.mod if user else False
+}, broadcast=True)
+
 
 @socketio.on('delete_message')
 def delete_message(message_id):
