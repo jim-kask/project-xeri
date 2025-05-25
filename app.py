@@ -11,7 +11,11 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
 
 # ✅ Railway sets this automatically
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set. Please check your Railway environment variables.")
+app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 socketio = SocketIO(app, cors_allowed_origins="*")
