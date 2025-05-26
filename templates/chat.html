@@ -71,6 +71,9 @@
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  let oldestMessageId = null;
+let loadingOlderMessages = false;
+
   const socket = io();
   const chatbox = document.getElementById('chatbox');
   const form = document.getElementById('chat-form');
@@ -80,6 +83,48 @@ document.addEventListener('DOMContentLoaded', () => {
   const imageUpload = document.getElementById('imageUpload');
 
   chatbox.scrollTop = chatbox.scrollHeight;
+  chatbox.addEventListener('scroll', () => {
+  if (chatbox.scrollTop === 0 && !loadingOlderMessages && oldestMessageId) {
+    loadingOlderMessages = true;
+    fetch(`/load_more?before_id=${oldestMessageId}`)
+      .then(res => res.json())
+      .then(olderMessages => {
+        if (olderMessages.length === 0) {
+          console.log("No older messages to load.");
+          return;
+        }
+
+        const prevScrollHeight = chatbox.scrollHeight;
+
+        olderMessages.forEach(msg => {
+          const div = document.createElement('div');
+          div.className = 'chat-message';
+          div.dataset.id = msg.id;
+
+          let inner = `<span>${msg.timestamp} - ${msg.username}: ${msg.text}</span>`;
+          if (document.body.dataset.isMod === 'true') {
+            inner += `<span class="admin-controls">
+                        <button onclick="deleteMessage(${msg.id})">🗑️</button>
+                      </span>`;
+          }
+          div.innerHTML = inner;
+          chatbox.insertBefore(div, chatbox.firstChild);
+
+          if (!oldestMessageId || msg.id < oldestMessageId) {
+            oldestMessageId = msg.id;
+          }
+        });
+
+        const newScrollHeight = chatbox.scrollHeight;
+        chatbox.scrollTop = newScrollHeight - prevScrollHeight;
+      })
+      .catch(err => console.error("Failed to load older messages:", err))
+      .finally(() => {
+        loadingOlderMessages = false;
+      });
+  }
+});
+
 
   socket.on('update_users', (users, isMod, mutedList) => {
     const userList = document.getElementById('users');
@@ -150,6 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const div = document.createElement('div');
     div.className = 'chat-message';
     div.dataset.id = data.id;
+    if (!oldestMessageId || data.id < oldestMessageId) {
+  oldestMessageId = data.id;
+}
+
     let inner = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
     if (document.body.dataset.isMod === 'true') {
       inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;
