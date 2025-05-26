@@ -368,3 +368,7 @@ input:focus {
     line-height: 1;
 }
 
+#users {
+  list-style-type: none;
+  padding-left: 0;
+}
