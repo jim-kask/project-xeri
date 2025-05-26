@@ -36,7 +36,8 @@
 
             {% if message.username in muted %}
               <span class="muted-label">(muted)</span>
-            {% endif %}: {{ message.text|safe }}
+            {% endif %}: {{ message.text.replace('\n', '<br>')|safe }}
+
           </span>
           {% if is_mod %}
           <span class="admin-controls">
@@ -110,7 +111,9 @@ let loadingOlderMessages = false;
           div.className = 'chat-message';
           div.dataset.id = msg.id;
 
-          let inner = `<span>${msg.timestamp} - <strong>${msg.username}</strong>: ${msg.text}</span>`;
+          let formattedText = msg.text.replace(/\n/g, "<br>");
+let inner = `<span>${msg.timestamp} - <strong>${msg.username}</strong>: ${formattedText}</span>`;
+
 
           if (document.body.dataset.isMod === 'true') {
             inner += `<span class="admin-controls">
@@ -141,9 +144,13 @@ let loadingOlderMessages = false;
     userList.innerHTML = '';
     users.forEach(userObj => {
       const li = document.createElement('li');
-      const dot = document.createElement('span');
-      dot.className = 'status-dot ' + (userObj.afk ? 'afk' : 'online');
-      li.appendChild(dot);
+      const emoji = userObj.afk ? '🔴' : '🟢';
+const dot = document.createElement('span');
+dot.className = 'status-dot';
+dot.textContent = emoji;
+dot.title = userObj.afk ? 'AFK' : 'Online';
+li.appendChild(dot);
+
       li.appendChild(document.createTextNode(userObj.name));
 
       if (mutedList.includes(userObj.name)) {
@@ -209,7 +216,9 @@ let loadingOlderMessages = false;
   oldestMessageId = data.id;
 }
 
-    let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${data.text}</span>`;
+    let formattedText = data.text.replace(/\n/g, "<br>");
+let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${formattedText}</span>`;
+
 
     if (document.body.dataset.isMod === 'true') {
       inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;

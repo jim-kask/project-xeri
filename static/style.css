@@ -302,13 +302,12 @@ input:focus {
     margin-right: 6px;
 }
 
-.online {
-    background-color: green;
+.status-dot {
+    display: inline-block;
+    margin-right: 6px;
+    font-size: 14px;
 }
 
-.afk {
-    background-color: red;
-}
 
 /* === Dark Mode Toggle Button === */
 .dark-toggle-btn {
