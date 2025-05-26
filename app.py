@@ -208,17 +208,7 @@ def handle_stop_typing():
     if username:
         emit('stop_typing', username, broadcast=True, include_self=False)
 
-@socketio.on('reaction')
-def handle_reaction(data):
-    message_id = data.get('messageId')
-    emoji = data.get('emoji')
-    if not message_id or not emoji:
-        return
 
-    emit('message_reaction', {
-        'messageId': message_id,
-        'emoji': emoji
-    }, broadcast=True)
 
 
 

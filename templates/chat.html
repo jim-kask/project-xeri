@@ -40,13 +40,7 @@
     {% endif %}: {{ message.text.replace('\n', '<br>')|safe }}
   </span>
 
-  <div class="reaction-container" data-id="{{ message.id }}"></div>
 
-  <div class="reaction-buttons">
-    <button onclick="sendReaction({{ message.id }}, '👍')">👍</button>
-    <button onclick="sendReaction({{ message.id }}, '❤️')">❤️</button>
-    <button onclick="sendReaction({{ message.id }}, '😂')">😂</button>
-  </div>
 
   {% if is_mod %}
   <span class="admin-controls">
@@ -60,13 +54,6 @@
             <button onclick="deleteMessage({{ message.id }})">🗑️</button>
           </span>
           {% endif %}
-          <div class="reaction-buttons">
-  <button onclick="sendReaction({{ message.id }}, '👍')">👍</button>
-  <button onclick="sendReaction({{ message.id }}, '❤️')">❤️</button>
-  <button onclick="sendReaction({{ message.id }}, '😂')">😂</button>
-</div>
-<div class="reaction-container" data-id="{{ message.id }}"></div>
-
         </div>
         {% endfor %}
         <script>
@@ -321,20 +308,7 @@ let inner = `<span title="${data.full_timestamp}">${data.timestamp}</span> - <st
       reader.readAsDataURL(file);
     }
     
-    function sendReaction(messageId, emoji) {
-  socket.emit('reaction', { messageId, emoji });
-}
 
-socket.on('message_reaction', ({ messageId, emoji }) => {
-  const container = document.querySelector(`.reaction-container[data-id='${messageId}']`);
-  if (!container) return;
-
-  const span = document.createElement('span');
-  span.className = 'reaction';
-  span.textContent = emoji;
-  span.style.marginRight = '4px';
-  container.appendChild(span);
-});
 
   });
 });
