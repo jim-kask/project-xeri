@@ -45,6 +45,14 @@
           {% endif %}
         </div>
         {% endfor %}
+        <script>
+  const chatMessages = document.querySelectorAll('.chat-message');
+  if (chatMessages.length > 0) {
+    const firstMsgId = chatMessages[0].dataset.id;
+    window.oldestMessageId = parseInt(firstMsgId);
+  }
+</script>
+
       </div>
 
       <div class="input-area">

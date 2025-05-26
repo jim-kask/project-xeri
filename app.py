@@ -6,6 +6,8 @@ from models import db, User, Message
 from datetime import datetime, timedelta
 import os
 from moderators import moderators
+from datetime import datetime, timedelta
+from flask import jsonify
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -98,7 +100,8 @@ def chat():
         return redirect(url_for('login'))
 
     user = User.query.filter_by(username=session['username']).first()
-    messages = Message.query.order_by(Message.timestamp.asc()).limit(500).all()
+    messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()[::-1]
+
 
     return render_template(
         'chat.html',
@@ -214,8 +217,55 @@ def emit_update_users():
         is_mod = user in moderators
         socketio.emit('update_users', (user_data, is_mod, list(muted_users)), room=user)
 
+@app.route('/admin/cleanup')
+def manual_cleanup():
+    username = session.get('username')
+    if username not in moderators:
+        return "Access denied", 403
+    delete_old_messages(30)
+    return "Old messages older than 30 days deleted."
+
+
+
+
+@app.route('/load_more', methods=['GET'])
+def load_more():
+    before_id = request.args.get('before_id', type=int)
+    if not before_id:
+        return jsonify([])
+
+    messages = (
+        Message.query
+        .filter(Message.id < before_id)
+        .order_by(Message.timestamp.desc())
+        .limit(50)
+        .all()
+    )
+
+    messages = list(reversed(messages))  # oldest to newest
+
+    return jsonify([
+        {
+            'id': msg.id,
+            'username': msg.username,
+            'text': msg.text,
+            'timestamp': msg.timestamp.strftime('%H:%M')
+        }
+        for msg in messages
+    ])
+
+
+
 # === Start Server ===
 
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     socketio.run(app, host='0.0.0.0', port=port)
+
+
+def delete_old_messages(days=30):
+    threshold = datetime.utcnow() - timedelta(days=days)
+    deleted = Message.query.filter(Message.timestamp < threshold).delete()
+    db.session.commit()
+    print(f"[CLEANUP] Deleted {deleted} messages older than {days} days.")
+
