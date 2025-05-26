@@ -176,6 +176,8 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("[CLIENT] Deleting message:", id);
     socket.emit('delete_message', id);
   }
+  window.deleteMessage = deleteMessage;
+
 
   function showPopup(text) {
     popup.textContent = text;
