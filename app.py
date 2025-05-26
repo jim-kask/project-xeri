@@ -155,12 +155,22 @@ def handle_chat(msg):
 def delete_message(message_id):
     username = session.get('username')
     user = User.query.filter_by(username=username).first()
-    if user and user.mod:
-        message = Message.query.get(message_id)
-        if message:
-            db.session.delete(message)
-            db.session.commit()
-            emit('remove_message', message_id, broadcast=True)
+    if not user:
+        print("[DELETE] No session user.")
+        return
+    if not user.mod:
+        print(f"[DELETE] {username} tried to delete but is not a mod.")
+        return
+
+    message = Message.query.get(message_id)
+    if message:
+        print(f"[DELETE] {username} deleted message ID {message_id}")
+        db.session.delete(message)
+        db.session.commit()
+        emit('remove_message', message_id, broadcast=True)
+    else:
+        print(f"[DELETE] Message ID {message_id} not found.")
+
 
 @socketio.on('mute_user')
 def mute_user(username_to_mute):

@@ -98,14 +98,16 @@ document.addEventListener('DOMContentLoaded', () => {
         li.appendChild(mutedSpan);
       }
 
-      if (isMod && userObj.name !== document.body.dataset.username) {
-        const btn = document.createElement('button');
-        btn.textContent = mutedList.includes(userObj.name) ? '🔊' : '🔇';
-        btn.onclick = () => {
-          socket.emit(mutedList.includes(userObj.name) ? 'unmute_user' : 'mute_user', userObj.name);
-        };
-        li.appendChild(btn);
-      }
+      if (document.body.dataset.isMod === 'true' && userObj.name !== document.body.dataset.username) {
+  const btn = document.createElement('button');
+  btn.className = 'mute-btn';
+  btn.textContent = mutedList.includes(userObj.name) ? '🔊' : '🔇';
+  btn.onclick = () => {
+    socket.emit(mutedList.includes(userObj.name) ? 'unmute_user' : 'mute_user', userObj.name);
+  };
+  li.appendChild(btn);
+}
+
 
       userList.appendChild(li);
     });
