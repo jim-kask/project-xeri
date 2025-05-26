@@ -147,12 +147,14 @@ def handle_chat(msg):
     user = User.query.filter_by(username=username).first()
 
     emit('chat', {
-        'id': message.id,
-        'username': username,
-        'text': msg,
-        'timestamp': timestamp,
-        'mod': user.mod if user else False
-    }, broadcast=True)
+    'id': message.id,
+    'username': username,
+    'text': msg,
+    'timestamp': timestamp,
+    'full_timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+    'mod': user.mod if user else False
+}, broadcast=True)
+
 
 @socketio.on('delete_message')
 def delete_message(message_id):
@@ -202,7 +204,23 @@ def handle_typing():
 
 @socketio.on('stop_typing')
 def handle_stop_typing():
-    emit('stop_typing', broadcast=True, include_self=False)
+    username = session.get('username')
+    if username:
+        emit('stop_typing', username, broadcast=True, include_self=False)
+
+@socketio.on('reaction')
+def handle_reaction(data):
+    message_id = data.get('messageId')
+    emoji = data.get('emoji')
+    if not message_id or not emoji:
+        return
+
+    emit('message_reaction', {
+        'messageId': message_id,
+        'emoji': emoji
+    }, broadcast=True)
+
+
 
 # === Utility ===
 

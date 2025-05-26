@@ -372,3 +372,23 @@ input:focus {
   list-style-type: none;
   padding-left: 0;
 }
+
+.reaction-container {
+  margin-top: 4px;
+}
+
+.reaction {
+  display: inline-block;
+  padding: 2px 6px;
+  margin-right: 4px;
+  background: #eee;
+  border-radius: 12px;
+  font-size: 14px;
+  user-select: none;
+  cursor: default;
+}
+
+.dark-mode .reaction {
+  background: #444;
+  color: #fff;
+}

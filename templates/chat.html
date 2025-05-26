@@ -31,19 +31,42 @@
       <div class="chat-area" id="chatbox">
         {% for message in messages %}
         <div class="chat-message" data-id="{{ message.id }}">
-          <span>
-            {{ message.timestamp.strftime('%H:%M') }} - <strong>{{ message.username }}</strong>
+  <span>
+    <span title="{{ message.timestamp.strftime('%Y-%m-%d %H:%M:%S') }}">
+      {{ message.timestamp.strftime('%H:%M') }}
+    </span> - <strong>{{ message.username }}</strong>
+    {% if message.username in muted %}
+      <span class="muted-label">(muted)</span>
+    {% endif %}: {{ message.text.replace('\n', '<br>')|safe }}
+  </span>
 
-            {% if message.username in muted %}
-              <span class="muted-label">(muted)</span>
-            {% endif %}: {{ message.text.replace('\n', '<br>')|safe }}
+  <div class="reaction-container" data-id="{{ message.id }}"></div>
 
-          </span>
+  <div class="reaction-buttons">
+    <button onclick="sendReaction({{ message.id }}, '👍')">👍</button>
+    <button onclick="sendReaction({{ message.id }}, '❤️')">❤️</button>
+    <button onclick="sendReaction({{ message.id }}, '😂')">😂</button>
+  </div>
+
+  {% if is_mod %}
+  <span class="admin-controls">
+    <button onclick="deleteMessage({{ message.id }})">🗑️</button>
+  </span>
+  {% endif %}
+</div>
+
           {% if is_mod %}
           <span class="admin-controls">
             <button onclick="deleteMessage({{ message.id }})">🗑️</button>
           </span>
           {% endif %}
+          <div class="reaction-buttons">
+  <button onclick="sendReaction({{ message.id }}, '👍')">👍</button>
+  <button onclick="sendReaction({{ message.id }}, '❤️')">❤️</button>
+  <button onclick="sendReaction({{ message.id }}, '😂')">😂</button>
+</div>
+<div class="reaction-container" data-id="{{ message.id }}"></div>
+
         </div>
         {% endfor %}
         <script>
@@ -149,7 +172,7 @@ const dot = document.createElement('span');
 dot.className = 'status-dot emoji-dot';
 dot.textContent = emoji;
 dot.title = userObj.afk ? 'AFK' : 'Online';
-dot.style.marginRight = '10px';  // ← ✅ add spacing
+dot.style.marginRight = '8px';  // ← ✅ add spacing
 li.appendChild(dot);
 
 
@@ -177,13 +200,31 @@ li.appendChild(dot);
     });
   });
 
-  socket.on('typing', (username) => {
-    typingIndicator.textContent = `${username} is typing...`;
-  });
+  let typingUsers = new Set();
 
-  socket.on('stop_typing', () => {
+socket.on('typing', (username) => {
+  typingUsers.add(username);
+  updateTypingIndicator();
+});
+
+socket.on('stop_typing', (username) => {
+  typingUsers.delete(username);
+  updateTypingIndicator();
+});
+
+function updateTypingIndicator() {
+  const myUsername = document.body.dataset.username;
+  const othersTyping = Array.from(typingUsers).filter(name => name !== myUsername);
+
+  if (othersTyping.length === 0) {
     typingIndicator.textContent = '';
-  });
+  } else if (othersTyping.length === 1) {
+    typingIndicator.textContent = `${othersTyping[0]} is typing...`;
+  } else {
+    typingIndicator.textContent = `${othersTyping.join(', ')} are typing...`;
+  }
+}
+
 
   messageInput.addEventListener('input', () => {
     socket.emit('typing');
@@ -219,7 +260,8 @@ li.appendChild(dot);
 }
 
     let formattedText = data.text.replace(/\n/g, "<br>");
-let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${formattedText}</span>`;
+let inner = `<span title="${data.full_timestamp}">${data.timestamp}</span> - <strong>${data.username}</strong>: ${formattedText}`;
+
 
 
     if (document.body.dataset.isMod === 'true') {
@@ -278,6 +320,22 @@ let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${form
       };
       reader.readAsDataURL(file);
     }
+    
+    function sendReaction(messageId, emoji) {
+  socket.emit('reaction', { messageId, emoji });
+}
+
+socket.on('message_reaction', ({ messageId, emoji }) => {
+  const container = document.querySelector(`.reaction-container[data-id='${messageId}']`);
+  if (!container) return;
+
+  const span = document.createElement('span');
+  span.className = 'reaction';
+  span.textContent = emoji;
+  span.style.marginRight = '4px';
+  container.appendChild(span);
+});
+
   });
 });
 </script>
