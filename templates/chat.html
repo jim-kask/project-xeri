@@ -161,10 +161,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   socket.on('remove_message', (msgId) => {
-    console.log("[CLIENT] Removing message:", msgId);
-    const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
-    if (msgEl) msgEl.remove();
-  });
+  console.log("[CLIENT] Received remove_message for ID:", msgId);
+  const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
+  if (msgEl) {
+    console.log("[CLIENT] Found matching element, removing.");
+    msgEl.remove();
+  } else {
+    console.warn("[CLIENT] No element found with data-id =", msgId);
+  }
+});
+
 
   function deleteMessage(id) {
     console.log("[CLIENT] Deleting message:", id);
