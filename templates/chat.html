@@ -29,11 +29,11 @@
       </div>
 
       <div class="chat-area" id="chatbox">
-        <p style="color:red;">Messages loaded: {{ messages|length }}</p>
         {% for message in messages %}
         <div class="chat-message" data-id="{{ message.id }}">
           <span>
-            {{ message.timestamp.strftime('%H:%M') }} - {{ message.username }}
+            {{ message.timestamp.strftime('%H:%M') }} - <strong>{{ message.username }}</strong>
+
             {% if message.username in muted %}
               <span class="muted-label">(muted)</span>
             {% endif %}: {{ message.text|safe }}
@@ -110,7 +110,8 @@ let loadingOlderMessages = false;
           div.className = 'chat-message';
           div.dataset.id = msg.id;
 
-          let inner = `<span>${msg.timestamp} - ${msg.username}: ${msg.text}</span>`;
+          let inner = `<span>${msg.timestamp} - <strong>${msg.username}</strong>: ${msg.text}</span>`;
+
           if (document.body.dataset.isMod === 'true') {
             inner += `<span class="admin-controls">
                         <button onclick="deleteMessage(${msg.id})">🗑️</button>
@@ -208,7 +209,8 @@ let loadingOlderMessages = false;
   oldestMessageId = data.id;
 }
 
-    let inner = `<span>${data.timestamp} - ${data.username}: ${data.text}</span>`;
+    let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${data.text}</span>`;
+
     if (document.body.dataset.isMod === 'true') {
       inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;
     }

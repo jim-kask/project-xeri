@@ -82,6 +82,13 @@ button:hover {
     background-color: #1d6fc2;
 }
 
+.dark-mode .input-area textarea {
+  background-color: #0d1117;
+  color: #c9d1d9;
+  border: 1px solid #333;
+}
+
+
 /* === Form Fields === */
 label {
     color: var(--text);
@@ -215,6 +222,18 @@ input:focus {
     flex: 1;
     padding: 8px;
 }
+
+.input-area textarea {
+  flex: 1;
+  padding: 10px;
+  font-size: 1em;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: none; /* 🚫 Prevents resizing */
+  height: 40px;  /* ✅ Fixed height */
+  line-height: 1.4;
+}
+
 
 /* === Messaging === */
 .chat-message {
