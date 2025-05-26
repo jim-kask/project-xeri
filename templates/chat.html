@@ -146,10 +146,12 @@ let inner = `<span>${msg.timestamp} - <strong>${msg.username}</strong>: ${format
       const li = document.createElement('li');
       const emoji = userObj.afk ? '🔴' : '🟢';
 const dot = document.createElement('span');
-dot.className = 'status-dot';
+dot.className = 'status-dot emoji-dot';
 dot.textContent = emoji;
 dot.title = userObj.afk ? 'AFK' : 'Online';
+dot.style.marginRight = '6px';  // ← ✅ add spacing
 li.appendChild(dot);
+
 
       li.appendChild(document.createTextNode(userObj.name));
 
