@@ -1,4 +1,4 @@
 # List of moderator usernames
 moderators = [
-    "jimx", "pepos"
+    "jimx", "pepos, panos"
 ]
