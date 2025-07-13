@@ -1,51 +1,83 @@
-from flask import Flask, render_template, request, redirect, url_for, session
-from flask_socketio import SocketIO, emit, join_room, leave_room
-from flask_sqlalchemy import SQLAlchemy
-from werkzeug.security import generate_password_hash, check_password_hash
-from models import db, User, Message
-from datetime import datetime, timedelta
 import os
-from moderators import moderators
+import json
 from datetime import datetime, timedelta
-from flask import jsonify
+
+from flask import (
+    Flask,
+    request,
+    session,
+    jsonify,
+    redirect,
+    render_template,
+    url_for,
+)
+from flask_socketio import SocketIO, emit, join_room, leave_room
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from models import db, User, Message
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key'
+app.config["SECRET_KEY"] = "your-secret-key"
 
-# ✅ Railway sets this automatically
+# Railway sets this automatically
 DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set. Please check your Railway environment variables.")
-app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    raise RuntimeError(
+        "DATABASE_URL is not set. Please check your Railway environment variables."
+    )
+app.config["SQLALCHEMY_DATABASE_URI"] = DATABASE_URL
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
 
-# === Initialize DB and assign mod flags ===
+
+def setup_moderators():
+    """Reads moderator usernames from config.json and sets their `mod` flag in the DB."""
+    try:
+        with open("config.json", "r") as f:
+            config = json.load(f)
+            moderators = config.get("moderators", [])
+
+            with app.app_context():
+                for username in moderators:
+                    user = User.query.filter_by(username=username).first()
+                    if user:
+                        user.mod = True
+                db.session.commit()
+                print("Moderator setup complete.")
+
+    except FileNotFoundError:
+        print("config.json not found. Skipping moderator setup.")
+    except json.JSONDecodeError:
+        print("Error decoding config.json. Skipping moderator setup.")
+
+
+# Initialise Database and Moderators
 with app.app_context():
     db.create_all()
-    for mod_name in moderators:
-        mod_user = User.query.filter_by(username=mod_name).first()
-        if mod_user and not mod_user.mod:
-            mod_user.mod = True
-    db.session.commit()
+    setup_moderators()
+
 
 # === Global State ===
+
+
 online_users = set()
 sessions = {}
 muted_users = set()
 last_activity = {}
 
-@app.route('/')
-def index():
-    return render_template('index.html')
 
-@app.route('/register', methods=['GET', 'POST'])
+@app.route("/")
+def index():
+    return render_template("index.html")
+
+
+@app.route("/register", methods=["GET", "POST"])
 def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
 
         if len(username) < 2 or len(username) > 24:
             return "Username must be between 2 and 24 characters"
@@ -55,78 +87,80 @@ def register():
             return "Username already exists"
 
         hashed_pw = generate_password_hash(password)
-        is_mod = username in moderators
-        new_user = User(username=username, password=hashed_pw, mod=is_mod)
+        new_user = User(username=username, password=hashed_pw, mod=False)
         db.session.add(new_user)
         db.session.commit()
-        return redirect(url_for('login'))
+        return redirect(url_for("login"))
 
-    return render_template('register.html')
+    return render_template("register.html")
 
-@app.route('/login', methods=['GET', 'POST'])
+
+@app.route("/login", methods=["GET", "POST"])
 def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
 
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password, password):
             if username in sessions:
                 return "User is already logged in elsewhere"
 
-            user.mod = username in moderators
-            db.session.commit()
-            session['username'] = username
+            session["username"] = username
             sessions[username] = True
-            return redirect(url_for('chat'))
+            return redirect(url_for("chat"))
         return "Invalid username or password"
 
-    return render_template('login.html')
+    return render_template("login.html")
 
-@app.route('/logout')
+
+@app.route("/logout")
 def logout():
-    username = session.get('username')
+    username = session.get("username")
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
         last_activity.pop(username, None)
         emit_update_users()
-    session.pop('username', None)
-    return redirect(url_for('index'))
+    session.pop("username", None)
+    return redirect(url_for("index"))
 
-@app.route('/chat')
+
+@app.route("/chat")
 def chat():
-    if 'username' not in session:
-        return redirect(url_for('login'))
+    if "username" not in session:
+        return redirect(url_for("login"))
 
-    user = User.query.filter_by(username=session['username']).first()
+    user = User.query.filter_by(username=session["username"]).first()
     messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()[::-1]
 
-
     return render_template(
-        'chat.html',
-        username=session['username'],
+        "chat.html",
+        username=session["username"],
         messages=messages,
         is_mod=user.mod if user else False,
         muted=list(muted_users),
-        data_username=session['username']
+        data_username=session["username"],
     )
+
 
 # === Socket.IO Events ===
 
-@socketio.on('connect')
+
+@socketio.on("connect")
 def handle_connect():
-    username = session.get('username')
+    username = session.get("username")
     if username:
         online_users.add(username)
         last_activity[username] = datetime.utcnow()
         join_room(username)
-        emit('message', f"{username} joined the chat", broadcast=True)
+        emit("message", f"{username} joined the chat", broadcast=True)
         emit_update_users()
 
-@socketio.on('disconnect')
+
+@socketio.on("disconnect")
 def handle_disconnect():
-    username = session.get('username')
+    username = session.get("username")
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
@@ -134,31 +168,36 @@ def handle_disconnect():
         leave_room(username)
         emit_update_users()
 
-@socketio.on('chat')
+
+@socketio.on("chat")
 def handle_chat(msg):
-    username = session.get('username', 'Anonymous')
+    username = session.get("username", "Anonymous")
     if username in muted_users:
         return
     last_activity[username] = datetime.utcnow()
     message = Message(username=username, text=msg)
     db.session.add(message)
     db.session.commit()
-    timestamp = message.timestamp.strftime('%H:%M')
+    timestamp = message.timestamp.strftime("%H:%M")
     user = User.query.filter_by(username=username).first()
 
-    emit('chat', {
-    'id': message.id,
-    'username': username,
-    'text': msg,
-    'timestamp': timestamp,
-    'full_timestamp': message.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-    'mod': user.mod if user else False
-}, broadcast=True)
+    emit(
+        "chat",
+        {
+            "id": message.id,
+            "username": username,
+            "text": msg,
+            "timestamp": timestamp,
+            "full_timestamp": message.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+            "mod": user.mod if user else False,
+        },
+        broadcast=True,
+    )
 
 
-@socketio.on('delete_message')
+@socketio.on("delete_message")
 def delete_message(message_id):
-    username = session.get('username')
+    username = session.get("username")
     user = User.query.filter_by(username=username).first()
     if not user:
         print("[DELETE] No session user.")
@@ -172,103 +211,112 @@ def delete_message(message_id):
         print(f"[DELETE] {username} deleted message ID {message_id}")
         db.session.delete(message)
         db.session.commit()
-        emit('remove_message', message_id, broadcast=True)
+        emit("remove_message", message_id, broadcast=True)
     else:
         print(f"[DELETE] Message ID {message_id} not found.")
 
 
-@socketio.on('mute_user')
+@socketio.on("mute_user")
 def mute_user(username_to_mute):
-    username = session.get('username')
+    username = session.get("username")
     user = User.query.filter_by(username=username).first()
     if user and user.mod:
         muted_users.add(username_to_mute)
-        emit('message', f"{username_to_mute} has been muted by a moderator.", broadcast=True)
+        emit(
+            "message",
+            f"{username_to_mute} has been muted by a moderator.",
+            broadcast=True,
+        )
         emit_update_users()
 
-@socketio.on('unmute_user')
+
+@socketio.on("unmute_user")
 def unmute_user(username_to_unmute):
-    username = session.get('username')
+    username = session.get("username")
     user = User.query.filter_by(username=username).first()
     if user and user.mod:
         muted_users.discard(username_to_unmute)
-        emit('message', f"{username_to_unmute} has been unmuted by a moderator.", broadcast=True)
+        emit(
+            "message",
+            f"{username_to_unmute} has been unmuted by a moderator.",
+            broadcast=True,
+        )
         emit_update_users()
 
-@socketio.on('typing')
+
+@socketio.on("typing")
 def handle_typing():
-    username = session.get('username')
+    username = session.get("username")
     if username:
         last_activity[username] = datetime.utcnow()
-        emit('typing', username, broadcast=True, include_self=False)
+        emit("typing", username, broadcast=True, include_self=False)
 
-@socketio.on('stop_typing')
+
+@socketio.on("stop_typing")
 def handle_stop_typing():
-    username = session.get('username')
+    username = session.get("username")
     if username:
-        emit('stop_typing', username, broadcast=True, include_self=False)
-
-
-
+        emit("stop_typing", username, broadcast=True, include_self=False)
 
 
 # === Utility ===
 
+
 def emit_update_users():
     now = datetime.utcnow()
     user_data = []
-    for user in online_users:
-        afk = (now - last_activity.get(user, now)) > timedelta(minutes=5)
-        user_data.append({'name': user, 'afk': afk})
+    for user_name in online_users:
+        user_obj = User.query.filter_by(username=user_name).first()
+        if user_obj:
+            afk = (now - last_activity.get(user_name, now)) > timedelta(minutes=5)
+            user_data.append({"name": user_name, "afk": afk, "mod": user_obj.mod})
 
-    for user in online_users:
-        is_mod = user in moderators
-        socketio.emit('update_users', (user_data, is_mod, list(muted_users)), room=user)
+    for user_name in online_users:
+        user_obj = User.query.filter_by(username=user_name).first()
+        if user_obj:
+            socketio.emit(
+                "update_users",
+                (user_data, user_obj.mod, list(muted_users)),
+                room=user_name,
+            )
 
-@app.route('/admin/cleanup')
+
+@app.route("/admin/cleanup")
 def manual_cleanup():
-    username = session.get('username')
-    if username not in moderators:
+    username = session.get("username")
+    user = User.query.filter_by(username=username).first()
+    if not user or not user.mod:
         return "Access denied", 403
     delete_old_messages(30)
     return "Old messages older than 30 days deleted."
 
 
-
-
-@app.route('/load_more', methods=['GET'])
+@app.route("/load_more", methods=["GET"])
 def load_more():
-    before_id = request.args.get('before_id', type=int)
+    before_id = request.args.get("before_id", type=int)
     if not before_id:
         return jsonify([])
 
     messages = (
-        Message.query
-        .filter(Message.id < before_id)
+        Message.query.filter(Message.id < before_id)
         .order_by(Message.timestamp.desc())
         .limit(50)
         .all()
     )
 
-    messages = list(reversed(messages))  # oldest to newest
+    messages = list(reversed(messages))  # Oldest to newest
 
-    return jsonify([
-        {
-            'id': msg.id,
-            'username': msg.username,
-            'text': msg.text,
-            'timestamp': msg.timestamp.strftime('%H:%M')
-        }
-        for msg in messages
-    ])
-
-
-
-# === Start Server ===
-
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    socketio.run(app, host='0.0.0.0', port=port)
+    return jsonify(
+        [
+            {
+                "id": msg.id,
+                "username": msg.username,
+                "text": msg.text,
+                "timestamp": msg.timestamp.strftime("%H:%M"),
+            }
+            for msg in messages
+        ]
+    )
 
 
 def delete_old_messages(days=30):
@@ -277,3 +325,7 @@ def delete_old_messages(days=30):
     db.session.commit()
     print(f"[CLEANUP] Deleted {deleted} messages older than {days} days.")
 
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    socketio.run(app, host="0.0.0.0", port=port)
