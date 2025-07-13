@@ -89,7 +89,12 @@ def handle_connect():
     logger.debug(f"Socket.IO connect event for user: {username}")
     if username:
         online_users.add(username)
-        sessions[username] = request.sid  # Store session ID
+        # Try to get the session ID, but handle the case where it might not exist
+        # (especially during tests)
+        sid = getattr(request, 'sid', None)
+        if sid:
+            sessions[username] = sid  # Store session ID
+        
         last_activity[username] = datetime.now(UTC)
         join_room(username)
         logger.info(f"{username} joined the chat.")
@@ -117,13 +122,14 @@ def handle_chat(msg):
     username = session.get("username", "Anonymous")
     logger.debug(f"Chat message received from {username}: {msg}")
     
+    # Always update last activity time, even for muted users
+    last_activity[username] = datetime.now(UTC)
+    
     if username in muted_users:
         logger.warning(f"Muted user {username} tried to send a message.")
         # Send a message back to the sender indicating they're muted
         emit("message", "You are muted and cannot send messages.")
         return
-    
-    last_activity[username] = datetime.now(UTC)
 
     # Create and save message - don't use a nested app context which can cause issues in tests
     # Instead, use the global db object directly
@@ -257,7 +263,7 @@ def unmute_user(username_to_unmute):
 
 
 @socketio.on("typing")
-def handle_typing(data):
+def handle_typing(data=None):
     """Handle user typing events."""
     username = session.get("username")
     if username:

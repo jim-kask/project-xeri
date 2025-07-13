@@ -392,11 +392,11 @@ def test_user_typing_events(client, socket_client, test_user):
     # Connect to Socket.IO
     socket_client.connect()
     
-    # Send typing event
-    socket_client.emit("typing")
+    # Send typing event with an empty data object
+    socket_client.emit("typing", {})
     
-    # Send stop typing event
-    socket_client.emit("stop_typing")
+    # Send stop typing event with an empty data object
+    socket_client.emit("stop_typing", {})
     
     # Since we're testing with a single client, we might not receive our own typing
     # events due to include_self=False in the emit
