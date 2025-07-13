@@ -148,7 +148,7 @@ def test_moderator_delete_message(client, socket_client, app, mod_user):
         message_id = message.id
     
         # Verify message exists before deletion
-        assert Message.query.get(message_id) is not None
+        assert db.session.get(Message, message_id) is not None
     
     # Log in as moderator
     login_user(client, "moduser", "password123")
@@ -160,12 +160,12 @@ def test_moderator_delete_message(client, socket_client, app, mod_user):
     # This ensures we're working with a valid app context and session
     with app.app_context():
         # Delete the message
-        message = Message.query.get(message_id)
+        message = db.session.get(Message, message_id)
         db.session.delete(message)
         db.session.commit()
         
         # Verify the message was deleted
-        assert Message.query.get(message_id) is None
+        assert db.session.get(Message, message_id) is None
         
         # Send delete message event for Socket.IO communication test
         socket_client.emit("delete_message", message_id)

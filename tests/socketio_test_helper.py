@@ -5,7 +5,7 @@ from flask_socketio import emit
 import functools
 import logging
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 
 def patch_socketio_test_client(app, socket_client):
@@ -13,14 +13,14 @@ def patch_socketio_test_client(app, socket_client):
     Patch a socket_client instance with custom event handlers for testing.
     This function adds a middleware layer that records events for testing.
     """
-    logger.debug("Patching Socket.IO test client")
+    _LOGGER.debug("Patching Socket.IO test client")
     
     original_emit = emit
     received_events = []
     
     def patched_emit(event, *args, **kwargs):
         """Custom emit that also records events for testing"""
-        logger.debug(f"Recording emitted event: {event}")
+        _LOGGER.debug(f"Recording emitted event: {event}")
         received_events.append({"name": event, "args": args, "kwargs": kwargs})
         return original_emit(event, *args, **kwargs)
     
@@ -29,7 +29,7 @@ def patch_socketio_test_client(app, socket_client):
     
     # Override get_received to return recorded events
     def patched_get_received():
-        logger.debug(f"Getting received events (count: {len(received_events)})")
+        _LOGGER.debug(f"Getting received events (count: {len(received_events)})")
         events = received_events.copy()
         received_events.clear()
         return events

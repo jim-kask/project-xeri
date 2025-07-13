@@ -17,7 +17,7 @@ from flask_socketio import emit, join_room, leave_room
 from .models import db, User, Message
 from . import socketio
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 chat_bp = Blueprint("chat", __name__)
 
@@ -30,15 +30,15 @@ last_activity = {}
 
 @chat_bp.route("/chat")
 def chat():
-    logger.debug("Chat route accessed.")
+    _LOGGER.debug("Chat route accessed.")
     if "username" not in session:
-        logger.debug("User not in session, redirecting to login.")
+        _LOGGER.debug("User not in session, redirecting to login.")
         return redirect(url_for("auth.login"))
 
     user = User.query.filter_by(username=session["username"]).first()
     messages = Message.query.order_by(Message.timestamp.desc()).limit(50).all()
     messages = messages[::-1]  # Reverse for chronological order
-    logger.debug(f"Loaded {len(messages)} messages for chat.")
+    _LOGGER.debug(f"Loaded {len(messages)} messages for chat.")
 
     return render_template(
         "chat.html",
@@ -52,10 +52,10 @@ def chat():
 
 @chat_bp.route("/load_more", methods=["GET"])
 def load_more():
-    logger.debug("Load more messages route accessed.")
+    _LOGGER.debug("Load more messages route accessed.")
     before_id = request.args.get("before_id", type=int)
     if not before_id:
-        logger.debug("No before_id provided for loading more messages.")
+        _LOGGER.debug("No before_id provided for loading more messages.")
         return jsonify([])
 
     messages = (
@@ -66,7 +66,7 @@ def load_more():
     )
 
     messages = list(reversed(messages))  # Oldest to newest
-    logger.debug(f"Loaded {len(messages)} older messages before ID {before_id}.")
+    _LOGGER.debug(f"Loaded {len(messages)} older messages before ID {before_id}.")
 
     return jsonify(
         [
@@ -86,7 +86,7 @@ def load_more():
 @socketio.on("connect")
 def handle_connect():
     username = session.get("username")
-    logger.debug(f"Socket.IO connect event for user: {username}")
+    _LOGGER.debug(f"Socket.IO connect event for user: {username}")
     if username:
         online_users.add(username)
         # Try to get the session ID, but handle the case where it might not exist
@@ -97,7 +97,7 @@ def handle_connect():
         
         last_activity[username] = datetime.now(UTC)
         join_room(username)
-        logger.info(f"{username} joined the chat.")
+        _LOGGER.info(f"{username} joined the chat.")
         emit("message", f"{username} joined the chat", broadcast=True)
         # Make sure to broadcast online users to everyone
         emit_update_users()
@@ -106,13 +106,13 @@ def handle_connect():
 @socketio.on("disconnect")
 def handle_disconnect():
     username = session.get("username")
-    logger.debug(f"Socket.IO disconnect event for user: {username}")
+    _LOGGER.debug(f"Socket.IO disconnect event for user: {username}")
     if username:
         online_users.discard(username)
         sessions.pop(username, None)
         last_activity.pop(username, None)
         leave_room(username)
-        logger.info(f"{username} left the chat.")
+        _LOGGER.info(f"{username} left the chat.")
         emit_update_users()
 
 
@@ -120,13 +120,13 @@ def handle_disconnect():
 def handle_chat(msg):
     """Handle incoming chat messages."""
     username = session.get("username", "Anonymous")
-    logger.debug(f"Chat message received from {username}: {msg}")
+    _LOGGER.debug(f"Chat message received from {username}: {msg}")
     
     # Always update last activity time, even for muted users
     last_activity[username] = datetime.now(UTC)
     
     if username in muted_users:
-        logger.warning(f"Muted user {username} tried to send a message.")
+        _LOGGER.warning(f"Muted user {username} tried to send a message.")
         # Send a message back to the sender indicating they're muted
         emit("message", "You are muted and cannot send messages.")
         return
@@ -137,9 +137,9 @@ def handle_chat(msg):
     db.session.add(message)
     try:
         db.session.commit()
-        logger.info(f"Message from {username} saved to DB with ID: {message.id}")
+        _LOGGER.info(f"Message from {username} saved to DB with ID: {message.id}")
     except Exception as e:
-        logger.error(f"Error saving message to DB: {e}")
+        _LOGGER.error(f"Error saving message to DB: {e}")
         db.session.rollback()
         emit("error", "Failed to save your message")
         return
@@ -170,15 +170,15 @@ def handle_chat(msg):
 def delete_message(message_id):
     """Handle message deletion by moderators."""
     username = session.get("username")
-    logger.debug(f"Delete message request from {username} for message ID: {message_id}")
+    _LOGGER.debug(f"Delete message request from {username} for message ID: {message_id}")
     
     # Check user permissions first - no nested app context
     user = User.query.filter_by(username=username).first()
     if not user:
-        logger.warning("[DELETE] No session user found for delete request.")
+        _LOGGER.warning("[DELETE] No session user found for delete request.")
         return
     if not user.mod:
-        logger.warning(
+        _LOGGER.warning(
             f"[DELETE] {username} tried to delete message ID {message_id} but is not a mod."
         )
         return
@@ -186,7 +186,7 @@ def delete_message(message_id):
     # Process message deletion directly
     message = Message.query.get(message_id)
     if message:
-        logger.info(f"[DELETE] {username} deleted message ID {message_id}")
+        _LOGGER.info(f"[DELETE] {username} deleted message ID {message_id}")
         try:
             db.session.delete(message)
             db.session.commit()
@@ -198,11 +198,11 @@ def delete_message(message_id):
             # For testing purposes
             emit("delete_confirmed", {"id": message_id})
         except Exception as e:
-            logger.error(f"Error deleting message from DB: {e}")
+            _LOGGER.error(f"Error deleting message from DB: {e}")
             db.session.rollback()
             emit("error", "Failed to delete message")
     else:
-        logger.warning(f"[DELETE] Message ID {message_id} not found.")
+        _LOGGER.warning(f"[DELETE] Message ID {message_id} not found.")
         emit("message", f"Message {message_id} not found")
 
 
@@ -210,13 +210,13 @@ def delete_message(message_id):
 def mute_user(username_to_mute):
     """Handle muting of users by moderators."""
     username = session.get("username")
-    logger.debug(f"Mute user request from {username} for user: {username_to_mute}")
+    _LOGGER.debug(f"Mute user request from {username} for user: {username_to_mute}")
     
     with current_app.app_context():
         user = User.query.filter_by(username=username).first()
         if user and user.mod:
             muted_users.add(username_to_mute)
-            logger.info(f"User {username_to_mute} has been muted by {username}.")
+            _LOGGER.info(f"User {username_to_mute} has been muted by {username}.")
             mute_message = f"{username_to_mute} has been muted by a moderator."
             
             emit(
@@ -229,7 +229,7 @@ def mute_user(username_to_mute):
             emit("mute_confirmed", {"username": username_to_mute})
             emit_update_users()
         else:
-            logger.warning(
+            _LOGGER.warning(
                 f"User {username} tried to mute {username_to_mute} but is not a mod."
             )
 
@@ -238,13 +238,13 @@ def mute_user(username_to_mute):
 def unmute_user(username_to_unmute):
     """Handle unmuting of users by moderators."""
     username = session.get("username")
-    logger.debug(f"Unmute user request from {username} for user: {username_to_unmute}")
+    _LOGGER.debug(f"Unmute user request from {username} for user: {username_to_unmute}")
     
     with current_app.app_context():
         user = User.query.filter_by(username=username).first()
         if user and user.mod:
             muted_users.discard(username_to_unmute)
-            logger.info(f"User {username_to_unmute} has been unmuted by {username}.")
+            _LOGGER.info(f"User {username_to_unmute} has been unmuted by {username}.")
             unmute_message = f"{username_to_unmute} has been unmuted by a moderator."
             
             emit(
@@ -257,7 +257,7 @@ def unmute_user(username_to_unmute):
             emit("unmute_confirmed", {"username": username_to_unmute})
             emit_update_users()
         else:
-            logger.warning(
+            _LOGGER.warning(
                 f"User {username} tried to unmute {username_to_unmute} but is not a mod."
             )
 

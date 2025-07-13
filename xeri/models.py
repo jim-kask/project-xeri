@@ -2,11 +2,11 @@ import logging
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, UTC
 
-logger = logging.getLogger(__name__)
+_LOGGER = logging.getLogger(__name__)
 
 db = SQLAlchemy()
 
-logger.debug("Loading database models...")
+_LOGGER.debug("Loading database models...")
 
 
 class User(db.Model):
@@ -23,4 +23,4 @@ class Message(db.Model):
     timestamp = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
 
 
-logger.debug("Database models loaded.")
+_LOGGER.debug("Database models loaded.")
