@@ -68,6 +68,25 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
         ```
     *   The application will automatically grant moderator privileges to these users on startup.
 
+## Development
+
+### Code Formatting and Linting
+
+This project uses `black` for code formatting and `ruff` for linting. To format the code and fix linting issues, run:
+
+```bash
+black .
+ruff check --fix .
+```
+
+### Running Tests
+
+This project uses `pytest` for testing. To run the test suite, run:
+
+```bash
+pytest
+```
+
 ## Running the Application
 
 To start the development server, run:
