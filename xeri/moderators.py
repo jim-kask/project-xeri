@@ -8,13 +8,16 @@ from .models import db, User, Message
 
 logger = logging.getLogger(__name__)
 
-moderators_bp = Blueprint('moderators', __name__)
+moderators_bp = Blueprint("moderators", __name__)
 
-def setup_moderators(app):
-    logger.debug("Attempting to set up moderators from config.json.")
+
+def setup_moderators(app, config_path=None):
     """Reads moderator usernames from config.json and sets their `mod` flag in the DB."""
+    logger.debug("Attempting to set up moderators from config.json.")
+
+    config_file = config_path if config_path else "config.json"
     try:
-        with open("config.json", "r", encoding="utf-8") as f:
+        with open(config_file, "r", encoding="utf-8") as f:
             config = json.load(f)
             moderators = config.get("moderators", [])
             logger.debug(f"Found moderators in config: {moderators}")
@@ -26,7 +29,9 @@ def setup_moderators(app):
                         user.mod = True
                         logger.info(f"Granted moderator privileges to {username}.")
                     else:
-                        logger.warning(f"Moderator user {username} not found in database.")
+                        logger.warning(
+                            f"Moderator user {username} not found in database."
+                        )
                 db.session.commit()
                 logger.info("Moderator setup complete.")
 
@@ -42,7 +47,9 @@ def manual_cleanup():
     logger.debug(f"Admin cleanup route accessed by user: {username}")
     user = User.query.filter_by(username=username).first()
     if not user or not user.mod:
-        logger.warning(f"User {username} attempted cleanup without moderator privileges.")
+        logger.warning(
+            f"User {username} attempted cleanup without moderator privileges."
+        )
         return "Access denied", 403
     delete_old_messages(30)
     logger.info("Manual cleanup initiated by moderator.")

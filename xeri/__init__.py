@@ -9,7 +9,8 @@ from .models import db
 
 socketio = SocketIO()
 
-def create_app():
+
+def create_app(config_path=None):
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key-fallback")
 
@@ -29,14 +30,15 @@ def create_app():
         db.create_all()
         # Import setup_moderators here to avoid circular import with app_context
         from .moderators import setup_moderators
-        setup_moderators(app)
 
-    # Import blueprints after app and socketio are initialized
+        setup_moderators(app, config_path)
+
+    # Import blueprints after app and socketio are initialised
     from .auth import auth_bp
     from .chat import chat_bp
     from .moderators import moderators_bp
 
-    # Register Blueprints
+    # Register blueprints
     app.register_blueprint(auth_bp)
     app.register_blueprint(chat_bp)
     app.register_blueprint(moderators_bp)
