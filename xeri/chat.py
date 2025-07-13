@@ -166,22 +166,22 @@ def delete_message(message_id):
     username = session.get("username")
     logger.debug(f"Delete message request from {username} for message ID: {message_id}")
     
-    # Check user permissions first
-    with current_app.app_context():
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            logger.warning("[DELETE] No session user found for delete request.")
-            return
-        if not user.mod:
-            logger.warning(
-                f"[DELETE] {username} tried to delete message ID {message_id} but is not a mod."
-            )
-            return
+    # Check user permissions first - no nested app context
+    user = User.query.filter_by(username=username).first()
+    if not user:
+        logger.warning("[DELETE] No session user found for delete request.")
+        return
+    if not user.mod:
+        logger.warning(
+            f"[DELETE] {username} tried to delete message ID {message_id} but is not a mod."
+        )
+        return
 
-        # Process message deletion
-        message = Message.query.get(message_id)
-        if message:
-            logger.info(f"[DELETE] {username} deleted message ID {message_id}")
+    # Process message deletion directly
+    message = Message.query.get(message_id)
+    if message:
+        logger.info(f"[DELETE] {username} deleted message ID {message_id}")
+        try:
             db.session.delete(message)
             db.session.commit()
             
@@ -191,9 +191,13 @@ def delete_message(message_id):
             
             # For testing purposes
             emit("delete_confirmed", {"id": message_id})
-        else:
-            logger.warning(f"[DELETE] Message ID {message_id} not found.")
-            emit("message", f"Message {message_id} not found")
+        except Exception as e:
+            logger.error(f"Error deleting message from DB: {e}")
+            db.session.rollback()
+            emit("error", "Failed to delete message")
+    else:
+        logger.warning(f"[DELETE] Message ID {message_id} not found.")
+        emit("message", f"Message {message_id} not found")
 
 
 @socketio.on("mute_user")
