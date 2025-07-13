@@ -83,6 +83,7 @@ def load_more():
 
 # === Socket.IO Events ===
 
+
 @socketio.on("connect")
 def handle_connect():
     username = session.get("username")
@@ -91,10 +92,10 @@ def handle_connect():
         online_users.add(username)
         # Try to get the session ID, but handle the case where it might not exist
         # (especially during tests)
-        sid = getattr(request, 'sid', None)
+        sid = getattr(request, "sid", None)
         if sid:
             sessions[username] = sid  # Store session ID
-        
+
         last_activity[username] = datetime.now(UTC)
         join_room(username)
         _LOGGER.info(f"{username} joined the chat.")
@@ -121,10 +122,10 @@ def handle_chat(msg):
     """Handle incoming chat messages."""
     username = session.get("username", "Anonymous")
     _LOGGER.debug(f"Chat message received from {username}: {msg}")
-    
+
     # Always update last activity time, even for muted users
     last_activity[username] = datetime.now(UTC)
-    
+
     if username in muted_users:
         _LOGGER.warning(f"Muted user {username} tried to send a message.")
         # Send a message back to the sender indicating they're muted
@@ -147,7 +148,7 @@ def handle_chat(msg):
     # Get user data
     user = User.query.filter_by(username=username).first()
     timestamp = message.timestamp.strftime("%H:%M")
-    
+
     # Prepare the message data
     message_data = {
         "id": message.id,
@@ -160,7 +161,7 @@ def handle_chat(msg):
 
     # Always emit chat events
     emit("chat", message_data, broadcast=True, include_self=True)
-    
+
     # For testing purposes - make sure we have at least one event
     # in get_received()
     emit("chat_received", {"status": "ok", "message_id": message.id})
@@ -170,8 +171,10 @@ def handle_chat(msg):
 def delete_message(message_id):
     """Handle message deletion by moderators."""
     username = session.get("username")
-    _LOGGER.debug(f"Delete message request from {username} for message ID: {message_id}")
-    
+    _LOGGER.debug(
+        f"Delete message request from {username} for message ID: {message_id}"
+    )
+
     # Check user permissions first - no nested app context
     user = User.query.filter_by(username=username).first()
     if not user:
@@ -190,11 +193,11 @@ def delete_message(message_id):
         try:
             db.session.delete(message)
             db.session.commit()
-            
+
             # Always emit events with include_self=True for tests
             emit("remove_message", message_id, broadcast=True, include_self=True)
             emit("message", f"Message {message_id} deleted successfully")
-            
+
             # For testing purposes
             emit("delete_confirmed", {"id": message_id})
         except Exception as e:
@@ -211,14 +214,14 @@ def mute_user(username_to_mute):
     """Handle muting of users by moderators."""
     username = session.get("username")
     _LOGGER.debug(f"Mute user request from {username} for user: {username_to_mute}")
-    
+
     with current_app.app_context():
         user = User.query.filter_by(username=username).first()
         if user and user.mod:
             muted_users.add(username_to_mute)
             _LOGGER.info(f"User {username_to_mute} has been muted by {username}.")
             mute_message = f"{username_to_mute} has been muted by a moderator."
-            
+
             emit(
                 "message",
                 mute_message,
@@ -239,14 +242,14 @@ def unmute_user(username_to_unmute):
     """Handle unmuting of users by moderators."""
     username = session.get("username")
     _LOGGER.debug(f"Unmute user request from {username} for user: {username_to_unmute}")
-    
+
     with current_app.app_context():
         user = User.query.filter_by(username=username).first()
         if user and user.mod:
             muted_users.discard(username_to_unmute)
             _LOGGER.info(f"User {username_to_unmute} has been unmuted by {username}.")
             unmute_message = f"{username_to_unmute} has been unmuted by a moderator."
-            
+
             emit(
                 "message",
                 unmute_message,
@@ -275,21 +278,23 @@ def emit_update_users():
     """Emit updated online users list to all clients."""
     now = datetime.now(UTC)
     user_data = []
-    
+
     with current_app.app_context():
         for user_name in online_users:
             user_obj = User.query.filter_by(username=user_name).first()
             if not user_obj:
                 continue
-                
+
             afk = (now - last_activity.get(user_name, now)) > timedelta(minutes=5)
-            user_data.append({
-                "name": user_name, 
-                "afk": afk, 
-                "mod": user_obj.mod,
-                "muted": user_name in muted_users
-            })
-    
+            user_data.append(
+                {
+                    "name": user_name,
+                    "afk": afk,
+                    "mod": user_obj.mod,
+                    "muted": user_name in muted_users,
+                }
+            )
+
     for user_name in online_users:
         emit(
             "update_users",

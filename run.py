@@ -1,9 +1,24 @@
+"""
+Entry point for launching the Xeri Flask application server with Socket.IO support.
+
+This module performs the following tasks:
+- Configures logging for debugging and informational output.
+- Loads environment variables from a .env file.
+- Creates the Flask application instance using the factory pattern.
+- Runs the application server with Socket.IO, listening on all interfaces and a configurable port.
+
+Usage:
+    python run.py
+
+Environment Variables:
+    PORT: The port number on which the server will listen (default: 5000).
+"""
+
 import os
 import logging
 from dotenv import load_dotenv
 from xeri import create_app, socketio
 
-# Configure logging
 logging.basicConfig(
     level=logging.DEBUG, format="(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
