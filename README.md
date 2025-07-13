@@ -6,14 +6,14 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
 
 *   **Real-time Messaging:** Instant message delivery using WebSockets.
 *   **User Authentication:** Secure user registration and login system.
-*   **Online User List:** See who's currently online.
-*   **AFK Status:** Users who are inactive for 5 minutes are marked as AFK (Away From Keyboard).
+*   **Online User List:** See who's currently online with visual indicators for their status.
+*   **AFK Status:** Users who are inactive for 5 minutes are marked as AFK (Away From Keyboard) with a red dot indicator.
 *   **Typing Indicators:** See when other users are typing a message.
 *   **Infinite Scroll:** Load older messages by scrolling to the top of the chat.
 *   **Moderation Tools:**
     *   Moderators can delete any message in the chat.
-    *   Moderators can mute and unmute users.
-*   **Emoji & Image Support:** Share emojis and upload images directly in the chat.
+    *   Moderators can mute and unmute users, preventing them from sending messages.
+*   **Emoji & Image Support:** Share a variety of emojis and upload images directly in the chat.
 
 ## Tech Stack
 
@@ -22,7 +22,7 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
     *   Flask
     *   Flask-SocketIO (for WebSocket communication)
     *   Flask-SQLAlchemy (for database ORM)
-    *   PostgreSQL (database)
+    *   PostgreSQL (production database) / SQLite (local development)
 *   **Frontend:**
     *   HTML5 / CSS3
     *   Vanilla JavaScript
@@ -48,12 +48,13 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
     ```
 
 4.  **Set up the database:**
-    *   Ensure you have PostgreSQL installed and running.
-    *   Create a new database.
-    *   Set the `DATABASE_URL` environment variable. For local development, you can create a `.env` file and add the following line:
+    *   For **local development**, a SQLite database (`instance/xeri.db`) will be automatically created.
+    *   For **production deployment**, ensure you have PostgreSQL installed and running. Create a new database.
+    *   Set the `DATABASE_URL` environment variable. For local development, you can create a `.env` file in the root directory and add the following line:
         ```
         DATABASE_URL='postgresql://USER:PASSWORD@HOST:PORT/DATABASE'
         ```
+        (Replace with your PostgreSQL connection string)
 
 5.  **Define Moderators:**
     *   Create a `config.json` file in the root directory (e.g., `/path/to/your/project/config.json`).
@@ -97,13 +98,14 @@ python -m pytest --cov=xeri
 python -m pytest --cov=xeri --cov-report=html
 ```
 
-The test suite includes tests for:
-- Authentication (register, login, logout)
-- Chat functionality and message handling
-- Socket.IO real-time events
-- Moderator actions and permissions
-- Database operations
-- Error handling
+The test suite includes extensive tests for:
+-   **Authentication:** User registration, login, and logout (covered in `tests/unit/test_auth.py` and `tests/test_app.py`).
+-   **Chat Functionality:** Message sending, loading older messages (infinite scroll), and real-time updates (covered in `tests/unit/test_chat.py` and `tests/test_app.py`).
+-   **Socket.IO Real-time Events:** Connection/disconnection handling, chat message transmission, typing indicators, and user status updates (covered in `tests/test_app.py` and `tests/integration/test_app_integration.py`).
+-   **Moderator Actions:** Message deletion, user muting/unmuting, and admin cleanup (covered in `tests/unit/test_moderators.py` and `tests/test_app.py`).
+-   **Database Operations:** Ensuring proper storage and retrieval of users and messages (`tests/unit/test_models.py`).
+-   **Error Handling:** Robustness of the application under various error conditions.
+-   **Comprehensive Coverage:** `tests/unit/test_chat_coverage.py` specifically aims to increase test coverage for various chat module scenarios.
 
 See the [tests/README.md](tests/README.md) file for more information about the test suite.
 
@@ -122,8 +124,6 @@ The application will be available at `http://127.0.0.1:5000`.
 Create a `.env` file in the root directory with the following variables:
 
 ```
-DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+DATABASE_URL=sqlite:///instance/xeri.db # Or your PostgreSQL connection string
 SECRET_KEY=your-super-secret-key
 ```
-
-For local development, you can use a SQLite database by setting `DATABASE_URL` to `sqlite:///instance/xeri.db`.
