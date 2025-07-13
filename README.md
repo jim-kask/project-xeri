@@ -56,7 +56,7 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
         ```
 
 5.  **Define Moderators:**
-    *   Create a `config.json` file in the root directory.
+    *   Create a `config.json` file in the root directory (e.g., `/path/to/your/project/config.json`).
     *   Add a JSON array of usernames to the file. For example:
         ```json
         {
@@ -92,7 +92,18 @@ pytest
 To start the development server, run:
 
 ```bash
-python app.py
+python run.py
 ```
 
 The application will be available at `http://127.0.0.1:5000`.
+
+### Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```
+DATABASE_URL=postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+SECRET_KEY=your-super-secret-key
+```
+
+For local development, you can use a SQLite database by setting `DATABASE_URL` to `sqlite:///instance/xeri.db`.
