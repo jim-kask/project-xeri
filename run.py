@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 from xeri import create_app, socketio
 
 logging.basicConfig(
-    level=logging.DEBUG, format="(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 _LOGGER = logging.getLogger(__name__)
 
