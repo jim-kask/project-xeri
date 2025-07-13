@@ -56,7 +56,17 @@ Xeri Chat is a real-time, web-based chat application built with Python and Flask
         ```
 
 5.  **Define Moderators:**
-    *   Edit the `moderators.py` file to add the usernames of users who should have moderator privileges.
+    *   Create a `config.json` file in the root directory.
+    *   Add a JSON array of usernames to the file. For example:
+        ```json
+        {
+          "moderators": [
+            "user1",
+            "user2"
+          ]
+        }
+        ```
+    *   The application will automatically grant moderator privileges to these users on startup.
 
 ## Running the Application
 
