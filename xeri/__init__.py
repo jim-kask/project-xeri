@@ -22,7 +22,14 @@ socketio = SocketIO()
 def create_app():
     app = Flask(__name__)
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key-fallback")
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///xeri.db")
+
+    # Create an absolute path to the database file
+    basedir = os.path.abspath(os.path.dirname(os.path.dirname(__file__)))
+    db_path = os.path.join(basedir, "instance", "xeri.db")
+    os.makedirs(os.path.dirname(db_path), exist_ok=True)
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+        "DATABASE_URL", f"sqlite:///{db_path}"
+    )
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
@@ -56,7 +63,11 @@ def create_app():
                 return "Username already exists"
 
             hashed_pw = generate_password_hash(password)
-            new_user = User(username=username, password=hashed_pw, mod=False)
+            new_user = User(
+                username=username,
+                password=hashed_pw,
+                mod=False
+            )
             db.session.add(new_user)
             db.session.commit()
             return redirect(url_for("login"))
@@ -137,7 +148,10 @@ def create_app():
         if username in muted_users:
             return
         last_activity[username] = datetime.utcnow()
-        message = Message(username=username, text=msg)
+        message = Message(
+            username=username,
+            text=msg
+        )
         db.session.add(message)
         db.session.commit()
         timestamp = message.timestamp.strftime("%H:%M")
