@@ -125,26 +125,32 @@ def handle_chat(msg):
     
     last_activity[username] = datetime.now(UTC)
 
-    # Create and save message with explicit app context to ensure test DB operations work
-    with current_app.app_context():
-        message = Message(username=username, text=msg)
-        db.session.add(message)
+    # Create and save message - don't use a nested app context which can cause issues in tests
+    # Instead, use the global db object directly
+    message = Message(username=username, text=msg)
+    db.session.add(message)
+    try:
         db.session.commit()
         logger.info(f"Message from {username} saved to DB with ID: {message.id}")
+    except Exception as e:
+        logger.error(f"Error saving message to DB: {e}")
+        db.session.rollback()
+        emit("error", "Failed to save your message")
+        return
 
-        # Get user data within the same app context
-        user = User.query.filter_by(username=username).first()
-        timestamp = message.timestamp.strftime("%H:%M")
-        
-        # Prepare the message data
-        message_data = {
-            "id": message.id,
-            "username": username,
-            "text": msg,
-            "timestamp": timestamp,
-            "full_timestamp": message.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
-            "mod": user.mod if user else False,
-        }
+    # Get user data
+    user = User.query.filter_by(username=username).first()
+    timestamp = message.timestamp.strftime("%H:%M")
+    
+    # Prepare the message data
+    message_data = {
+        "id": message.id,
+        "username": username,
+        "text": msg,
+        "timestamp": timestamp,
+        "full_timestamp": message.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        "mod": user.mod if user else False,
+    }
 
     # Always emit chat events
     emit("chat", message_data, broadcast=True, include_self=True)
