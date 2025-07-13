@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 
 from flask import (
     Flask,
@@ -127,7 +127,7 @@ def create_app():
         username = session.get("username")
         if username:
             online_users.add(username)
-            last_activity[username] = datetime.utcnow()
+            last_activity[username] = datetime.now(UTC)
             join_room(username)
             emit("message", f"{username} joined the chat", broadcast=True)
             emit_update_users()
@@ -147,7 +147,7 @@ def create_app():
         username = session.get("username", "Anonymous")
         if username in muted_users:
             return
-        last_activity[username] = datetime.utcnow()
+        last_activity[username] = datetime.now(UTC)
         message = Message(
             username=username,
             text=msg
@@ -220,7 +220,7 @@ def create_app():
     def handle_typing():
         username = session.get("username")
         if username:
-            last_activity[username] = datetime.utcnow()
+            last_activity[username] = datetime.now(UTC)
             emit("typing", username, broadcast=True, include_self=False)
 
     @socketio.on("stop_typing")
@@ -232,7 +232,7 @@ def create_app():
     # === Utility ===
 
     def emit_update_users():
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         user_data = []
         for user_name in online_users:
             user_obj = User.query.filter_by(username=user_name).first()
@@ -286,7 +286,7 @@ def create_app():
         )
 
     def delete_old_messages(days=30):
-        threshold = datetime.utcnow() - timedelta(days=days)
+        threshold = datetime.now(UTC) - timedelta(days=days)
         deleted = Message.query.filter(Message.timestamp < threshold).delete()
         db.session.commit()
         print(f"[CLEANUP] Deleted {deleted} messages older than {days} days.")
