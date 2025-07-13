@@ -17,7 +17,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models import db, User, Message
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "your-secret-key"
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "your-secret-key-fallback")
 
 # Railway sets this automatically
 DATABASE_URL = os.environ.get("DATABASE_URL")
