@@ -26,5 +26,11 @@ wsproto==1.2.0
 # Development tools
 black
 ruff
-pytest
 gunicorn
+
+# Testing dependencies
+pytest
+pytest-flask
+pytest-socket
+pytest-cov
+pytest-mock

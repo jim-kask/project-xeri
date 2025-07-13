@@ -81,11 +81,31 @@ ruff check --fix .
 
 ### Running Tests
 
-This project uses `pytest` for testing. To run the test suite, run:
+This project uses `pytest` for comprehensive testing. To run the tests:
 
 ```bash
-pytest
+# Run the provided test script (recommended)
+./run_tests.sh
+
+# Or run pytest directly
+python -m pytest
+
+# Run tests with coverage report
+python -m pytest --cov=xeri
+
+# Generate HTML coverage report
+python -m pytest --cov=xeri --cov-report=html
 ```
+
+The test suite includes tests for:
+- Authentication (register, login, logout)
+- Chat functionality and message handling
+- Socket.IO real-time events
+- Moderator actions and permissions
+- Database operations
+- Error handling
+
+See the [tests/README.md](tests/README.md) file for more information about the test suite.
 
 ## Running the Application
 
