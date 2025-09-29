@@ -4,7 +4,11 @@
 
 {% block content %}
 <div class="main-layout">
-<div class="game-box"></div>
+  <!-- LEFT PANEL (games live here) -->
+  <div class="game-box">
+    <div id="gx-root" style="height:100%"></div>
+  </div>
+
 
 <div class="chat-box">
 <div class="container">
@@ -281,5 +285,14 @@ reader.readAsDataURL(file);
 }
 });
 });
+</script> <!-- ← this closes your chat script -->
+
+<!-- Games module (isolated UI) -->
+<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}"></script>
+<script>
+  // Mount the games app into the left panel
+  window.XeriGames.mount('#gx-root', {
+    username: document.body.dataset.username || "{{ username }}"
+  });
 </script>
 {% endblock %}
