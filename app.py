@@ -8,6 +8,8 @@ import os
 from moderators import moderators
 from datetime import datetime, timedelta
 from flask import jsonify
+from games_service import init_socketio as init_games
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-secret-key'
@@ -30,6 +32,10 @@ with app.app_context():
         if mod_user and not mod_user.mod:
             mod_user.mod = True
     db.session.commit()
+
+# === Initialize Games module ===
+init_games(socketio, app)
+
 
 # === Global State ===
 online_users = set()
