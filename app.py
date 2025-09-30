@@ -118,6 +118,13 @@ def chat():
         data_username=session['username']
     )
 
+@app.route('/games')
+def games():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games.html', username=session['username'])
+
+
 # === Socket.IO Events ===
 
 @socketio.on('connect')

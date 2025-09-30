@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Games{% endblock %}
+
+{% block content %}
+<div class="game-box" style="padding: 0; height: 100%;">
+  <div id="gx-root" style="height:100%"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Socket.IO client for the games module -->
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Games module -->
+<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}?v=1"></script>
+<script>
+  console.log('[games] before mount →', window.XeriGames);
+  window.XeriGames?.mount('#gx-root', {
+    username: "{{ username or 'guest' }}"
+  });
+  console.log('[games] after mount called');
+</script>
+{% endblock %}
