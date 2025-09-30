@@ -100,7 +100,7 @@ chatbox.scrollTop = chatbox.scrollHeight;
 chatbox.addEventListener('scroll', () => {
 if (chatbox.scrollTop === 0 && !loadingOlderMessages && oldestMessageId) {
 loadingOlderMessages = true;
-fetch('/load_more?before_id=' + oldestMessageId)
+fetch(`/load_more?before_id=${oldestMessageId}`)
 .then(res => res.json())
 .then(olderMessages => {
 if (olderMessages.length === 0) {
@@ -116,15 +116,15 @@ div.className = 'chat-message';
 div.dataset.id = msg.id;
 
 let formattedText = msg.text.replace(/\n/g, "<br>");
-let inner = '<span>' + msg.timestamp + ' - <strong>' + msg.username + '</strong>: ' + formattedText + '</span>';
+let inner = `<span>${msg.timestamp} - <strong>${msg.username}</strong>: ${formattedText}</span>`;
+
 
 if (document.body.dataset.isMod === 'true') {
-  inner += '<span class="admin-controls">' +
-           '<button onclick="deleteMessage(' + msg.id + ')">🗑️</button>' +
-           '</span>';
+inner += `<span class="admin-controls">
+                       <button onclick="deleteMessage(${msg.id})">🗑️</button>
+                     </span>`;
 }
 div.innerHTML = inner;
-
 chatbox.insertBefore(div, chatbox.firstChild);
 
 if (!oldestMessageId || msg.id < oldestMessageId) {
@@ -183,8 +183,7 @@ userList.appendChild(li);
 });
 
 socket.on('typing', (username) => {
-typingIndicator.textContent = username + ' is typing...';
-
+typingIndicator.textContent = `${username} is typing...`;
 });
 
 socket.on('stop_typing', () => {
@@ -225,21 +224,21 @@ oldestMessageId = data.id;
 }
 
 let formattedText = data.text.replace(/\n/g, "<br>");
-let inner = '<span>' + data.timestamp + ' - <strong>' + data.username + '</strong>: ' + formattedText + '</span>';
+let inner = `<span>${data.timestamp} - <strong>${data.username}</strong>: ${formattedText}</span>`;
+
 
 if (document.body.dataset.isMod === 'true') {
-  inner += '<span class="admin-controls"><button onclick="deleteMessage(' + data.id + ')">🗑️</button></span>';
+inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;
 }
 div.innerHTML = inner;
-...
-showPopup(data.username + ' sent a message');
-
+chatbox.appendChild(div);
+chatbox.scrollTop = chatbox.scrollHeight;
+showPopup(`${data.username} sent a message`);
 });
 
 socket.on('remove_message', (msgId) => {
 console.log("[CLIENT] Received remove_message for ID:", msgId);
-const msgEl = document.querySelector(".chat-message[data-id='" + msgId + "']");
-
+const msgEl = document.querySelector(`.chat-message[data-id='${msgId}']`);
 if (msgEl) {
 console.log("[CLIENT] Found matching element, removing.");
 msgEl.remove();
@@ -280,7 +279,7 @@ const file = imageUpload.files[0];
 if (file) {
 const reader = new FileReader();
 reader.onload = function(e) {
-socket.emit('chat', "<img src='" + e.target.result + "' style='max-width:200px;'>");
+socket.emit('chat', `<img src='${e.target.result}' style='max-width:200px;'>`);
 };
 reader.readAsDataURL(file);
 }
@@ -289,17 +288,11 @@ reader.readAsDataURL(file);
 </script> <!-- ← this closes your chat script -->
 
 <!-- Games module (isolated UI) -->
-<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}?v=12"></script>
+<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}"></script>
 <script>
-  // Log before mounting so we can see if the module loaded
-  console.log('[games] before mount →', window.XeriGames);
-
-  // Optional chaining prevents a crash if the module hasn't loaded yet
-  window.XeriGames?.mount('#gx-root', {
+  // Mount the games app into the left panel
+  window.XeriGames.mount('#gx-root', {
     username: document.body.dataset.username || "{{ username }}"
   });
-
-  console.log('[games] after mount called');
 </script>
-
 {% endblock %}
