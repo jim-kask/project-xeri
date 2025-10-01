@@ -4,18 +4,34 @@
 
 {% block content %}
 <div class="main-layout">
-  <!-- LEFT PANEL (games entry tile) -->
-  <div class="game-box" style="position:relative; padding:20px;">
-  <a href="{{ url_for('games') }}" 
-     style="position:absolute; top:20px; left:20px;
-            display:flex; align-items:center; justify-content:center;
-            width:90px; height:90px;
-            background:#e9eef3; border-radius:12px;
-            font-size:20px; text-decoration:none; color:#333;
-            box-shadow:0 2px 6px rgba(0,0,0,0.15);">
-    🎮 Game_1
-  </a>
+  <!-- LEFT PANEL (games entry tiles) -->
+  <div class="game-box">
+
+    <!-- Game 1 -->
+    <a href="{{ url_for('games') }}" class="game-tile" style="left: 20px;">
+      <img src="{{ url_for('static', filename='images/images-for-games/game1.png') }}"
+           alt="Game 1" class="game-icon">
+      Game_1
+    </a>
+
+    <!-- Game 2 -->
+    <a href="{{ url_for('games') }}" class="game-tile" style="left: 130px;">
+      <img src="{{ url_for('static', filename='images/images-for-games/game2.png') }}"
+           alt="Game 2" class="game-icon">
+      Game_2
+    </a>
+
+    <!-- Game 3 -->
+    <a href="{{ url_for('games') }}" class="game-tile" style="left: 240px;">
+      <img src="{{ url_for('static', filename='images/images-for-games/game3.png') }}"
+           alt="Game 3" class="game-icon">
+      Game_3
+    </a>
+
+  </div>
 </div>
+{% endblock %}
+
 
 
 

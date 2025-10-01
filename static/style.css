@@ -132,6 +132,41 @@ box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
 overflow: hidden;
 }
 
+
+/* Make tiles position relative to this box */
+.game-box {
+  position: relative;
+  padding: 20px;
+}
+
+
+/* === Game Tile === */
+.game-tile {
+  position: absolute;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 90px;
+  height: 90px;
+  background: #e9eef3;
+  border-radius: 12px;
+  font-size: 14px;
+  text-decoration: none;
+  color: #333;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+
+.game-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 6px;
+  object-fit: contain;
+}
+
+
 .chat-box {
 display: flex;
 flex-direction: column;
