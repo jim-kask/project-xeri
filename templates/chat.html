@@ -3,20 +3,15 @@
 {% block title %}Chatroom{% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
-<div class="main-layout">
-  <!-- LEFT PANEL (hidden in chat view) -->
-  <div class="game-box" style="display:none">
-    <a href="{{ url_for('game') }}">
-      🎮 Game_1
-    </a>
-  </div>
-=======
-<main class="main-grid">
-  {% include 'games/_panel.html' %}
-  <aside class="chat-col">
+<div class="main-grid">
+  <aside class="game-panel">
+    <div id="gx-root-chat">
+      {% include 'games/_panel.html' %}
+    </div>
+  </aside>
+  <section class="chat-panel">
 
->>>>>>> 3282952 (Split chat layout into game panel + chat panel, mount games module in /chat)
+
 
 
 
@@ -84,11 +79,11 @@ window.oldestMessageId = parseInt(firstMsgId);
 </div>
 
 
-  </aside>
-</main>
-
+  </section>
+</div>
 
 <div class="popup" id="popup"></div>
+
 
 
 <!-- Pass is_mod to JS -->

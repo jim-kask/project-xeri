@@ -113,58 +113,8 @@ border-color: #4A90E2;
 }
 
 /* === Layout === */
-.main-layout {
-display: flex;
-justify-content: center;
-align-items: flex-start;
-gap: 30px;
-padding: 40px;
-}
-
-.game-box,
-.chat-box {
-width: 600px;
-height: 600px;
-border: 3px solid #00000022;
-border-radius: 30px;
-background-color: #ffffffcc;
-box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-overflow: hidden;
-}
 
 
-/* Make tiles position relative to this box */
-.game-box {
-  position: relative;
-  padding: 20px;
-}
-
-
-/* === Game Tile === */
-.game-tile {
-  position: absolute;
-  top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  width: 90px;
-  height: 90px;
-  background: #e9eef3;
-  border-radius: 12px;
-  font-size: 14px;
-  text-decoration: none;
-  color: #333;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-}
-
-
-.game-icon {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 6px;
-  object-fit: contain;
-}
 
 
 .chat-box {
@@ -420,11 +370,13 @@ line-height: 1;
 .game-panel {
   position: relative;
   height: 78vh;
-  background: linear-gradient(180deg, #dfe5ea, #d6dbe0);
+  background: #f3f4f6;           /* solid light gray */
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
+  padding: 14px;                  /* gives breathing room inside */
 }
+
 
 /* “Game_1” tile (top-left) */
 .game-tile {
@@ -441,19 +393,31 @@ line-height: 1;
   text-decoration: none;
   font-weight: 600;
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  cursor: pointer;                     /* 👈 now shows hand cursor */
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.game-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+}
+.game-tile:active {
+  transform: translateY(0);
 }
 .game-tile .icon { font-size: 20px; }
 
-/* The inner gray fill (just covers the panel) */
-.game-canvas {
-  position: absolute;
-  inset: 0;
+
+
+
+
+/* RIGHT chat column wrapper */
+.chat-panel {
+  background: var(--chat-bg);
   border-radius: 24px;
-  background: linear-gradient(180deg, #dfe5ea, #d6dbe0);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+  min-height: 78vh;
 }
 
-/* RIGHT chat column wrapper (visuals controlled by existing chat styles) */
-.chat-col {}
 
 /* Responsive */
 @media (max-width: 1100px) {
