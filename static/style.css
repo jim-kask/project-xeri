@@ -372,13 +372,14 @@ line-height: 1;
 /* LEFT gray game panel */
 .game-panel {
   position: relative;
-  height: 78vh;
   background: #f3f4f6;           /* solid light gray */
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
   padding: 14px;                  /* gives breathing room inside */
 }
+
+
 
 /* Make both panels same fixed height */
 .game-panel,
@@ -425,24 +426,21 @@ line-height: 1;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
-  min-height: 78vh;
+
+  /* make children fill vertically so input stays fixed */
+  display: flex;
+  flex-direction: column;
 }
 
 
-/* Responsive */
-/* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
-.main-grid {
-  display: grid;
-  grid-template-columns: 600px 500px;  /* fixed left + fixed right */
-  gap: 20px;
-  padding: 0 16px;
-  width: 1140px;                       /* total width = 600 + 500 + 40 gap */
-  margin: 0 auto;                      /* center on screen */
+/* Let chat content fill height, keep input/emojis fixed at bottom */
+.chat-panel > .chat-box {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.chat-box .container {
+  height: 100%;
+  min-height: 0;
 }
 
-
-  /* NEW: make the grid wide enough so the left column exists */
-  width: min(1200px, 95vw);
-  margin: 0 auto;                       /* center the grid */
-}
 
