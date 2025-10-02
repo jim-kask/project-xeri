@@ -4,11 +4,17 @@
 
 {% block content %}
 <div class="main-layout">
-  <!-- LEFT PANEL (games entry tiles) -->
-  <div class="game-box">
-
-
-  </div>
+  <!-- LEFT PANEL (games entry tile) -->
+  <div class="game-box" style="position:relative; padding:20px;">
+  <a href="{{ url_for('games') }}" 
+     style="position:absolute; top:20px; left:20px;
+            display:flex; align-items:center; justify-content:center;
+            width:90px; height:90px;
+            background:#e9eef3; border-radius:12px;
+            font-size:20px; text-decoration:none; color:#333;
+            box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+    🎮 Game_1
+  </a>
 </div>
 
 
