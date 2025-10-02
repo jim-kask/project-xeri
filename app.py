@@ -118,11 +118,18 @@ def chat():
         data_username=session['username']
     )
 
-@app.route('/games')
-def games():
+@app.route('/game')
+def game():
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('games.html', username=session['username'])
+    return render_template('game.html', username=session['username'])
+
+
+@app.route('/games')
+def games_legacy():
+    return redirect(url_for('game'))
+
+
 
 
 # === Socket.IO Events ===

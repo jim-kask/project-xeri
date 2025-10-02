@@ -3,20 +3,27 @@
 {% block title %}Chatroom{% endblock %}
 
 {% block content %}
-<div class="main-layout">
-  <!-- LEFT PANEL (hidden in chat view) -->
-  <div class="game-box" style="display:none">
-    <a href="{{ url_for('games') }}">
-      🎮 Game_1
-    </a>
-  </div>
+<div class="game-box" style="position:relative; padding:20px;">
+  <a href="{{ url_for('games') }}" 
+     style="position:absolute; top:20px; left:20px;
+            display:flex; align-items:center; justify-content:center;
+            width:90px; height:90px;
+            background:#e9eef3; border-radius:12px;
+            font-size:20px; text-decoration:none; color:#333;
+            box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+    🎮 Game_1
+  </a>
+
+  <!-- Mount point for your games module -->
+  <div id="gx-root" style="margin-top:140px;"></div>
+</div>
 
 
 
 
 
 
-<div class="chat-box">
+<div class="chat-box" style="display:none">
 <div class="container">
 <div class="sidebar">
 <div class="users">
@@ -90,6 +97,13 @@ document.body.dataset.isMod = "{{ 'true' if is_mod else 'false' }}";
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+  // --- Guard: if there is no chat UI on this page, skip all chat JS ---
+  if (!document.getElementById('chatbox') || 
+      !document.getElementById('chat-form') || 
+      !document.getElementById('message')) {
+    return;
+  }
+
 let oldestMessageId = window.oldestMessageId || null;
 
 let loadingOlderMessages = false;
