@@ -361,12 +361,13 @@ line-height: 1;
 /* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
 .main-grid {
   display: grid;
-  grid-template-columns: 600px 500px;  /* fixed left + fixed right */
+  grid-template-columns: 1fr 1fr;   /* equal width columns */
   gap: 20px;
   padding: 0 16px;
-  width: 1140px;                       /* total width = 600 + 500 + 40 gap */
-  margin: 0 auto;                      /* center on screen */
+  width: 1200px;                    /* total width (2x 590px + 20 gap approx) */
+  margin: 0 auto;                   /* center on screen */
 }
+
 
 
 /* LEFT gray game panel */
