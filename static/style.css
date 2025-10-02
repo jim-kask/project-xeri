@@ -420,7 +420,15 @@ line-height: 1;
 
 
 /* Responsive */
-@media (max-width: 1100px) {
-  .main-grid { grid-template-columns: 1fr; }
-  .chat-col { order: 2; }
+/* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 500px;     /* left flexible, right fixed */
+  gap: 20px;
+  padding: 0 16px;
+
+  /* NEW: make the grid wide enough so the left column exists */
+  width: min(1200px, 95vw);
+  margin: 0 auto;                       /* center the grid */
 }
+
