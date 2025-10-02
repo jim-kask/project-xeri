@@ -361,10 +361,13 @@ line-height: 1;
 /* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 500px; /* left flexible, right fixed */
+  grid-template-columns: 600px 500px;  /* fixed left + fixed right */
   gap: 20px;
   padding: 0 16px;
+  width: 1140px;                       /* total width = 600 + 500 + 40 gap */
+  margin: 0 auto;                      /* center on screen */
 }
+
 
 /* LEFT gray game panel */
 .game-panel {
@@ -375,6 +378,13 @@ line-height: 1;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
   padding: 14px;                  /* gives breathing room inside */
+}
+
+/* Make both panels same fixed height */
+.game-panel,
+.chat-panel {
+  height: 80vh;    /* same height for both panels */
+  min-height: 600px;
 }
 
 
@@ -423,9 +433,13 @@ line-height: 1;
 /* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
 .main-grid {
   display: grid;
-  grid-template-columns: 1fr 500px;     /* left flexible, right fixed */
+  grid-template-columns: 600px 500px;  /* fixed left + fixed right */
   gap: 20px;
   padding: 0 16px;
+  width: 1140px;                       /* total width = 600 + 500 + 40 gap */
+  margin: 0 auto;                      /* center on screen */
+}
+
 
   /* NEW: make the grid wide enough so the left column exists */
   width: min(1200px, 95vw);
