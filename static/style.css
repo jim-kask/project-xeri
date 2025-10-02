@@ -373,11 +373,12 @@ line-height: 1;
 /* LEFT gray game panel */
 .game-panel {
   position: relative;
-  background: #f3f4f6;           /* solid light gray */
+  background: #f3f4f6;
   border-radius: 24px;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
-  padding: 14px;                  /* gives breathing room inside */
+  padding: 14px;
+  box-sizing: border-box;   /* ← include padding in the fixed height */
 }
 
 
@@ -385,9 +386,11 @@ line-height: 1;
 /* Make both panels same fixed height */
 .game-panel,
 .chat-panel {
-  height: 80vh;    /* same height for both panels */
+  height: 80vh;           /* same height */
   min-height: 600px;
+  box-sizing: border-box; /* ensure padding doesn’t add to total height */
 }
+
 
 
 /* “Game_1” tile (top-left) */
@@ -428,10 +431,13 @@ line-height: 1;
   box-shadow: 0 10px 30px rgba(0,0,0,0.25);
   overflow: hidden;
 
-  /* make children fill vertically so input stays fixed */
   display: flex;
   flex-direction: column;
+
+  padding: 14px;            /* ← match game-panel */
+  box-sizing: border-box;   /* ← include padding in the fixed height */
 }
+
 
 
 /* Let chat content fill height, keep input/emojis fixed at bottom */
