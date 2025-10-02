@@ -126,8 +126,11 @@ def game():
 
 
 @app.route('/games')
-def games_legacy():
-    return redirect(url_for('game'))
+def games():
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('games.html', username=session['username'])
+
 
 
 

@@ -1,0 +1,11 @@
+{# templates/games/_panel.html #}
+<section id="game-panel" class="game-panel">
+  <a class="game-tile" href="{{ url_for('games') }}" title="Open games area">
+    <span class="icon">🎮</span><span>Game_1</span>
+  </a>
+
+  <!-- container that the games module will mount into (LEFT side inside chat) -->
+  <div class="game-box" style="padding:0; height:100%;">
+    <div id="gx-root-chat" style="height:100%"></div>
+  </div>
+</section>

@@ -3,21 +3,19 @@
 {% block title %}Chatroom{% endblock %}
 
 {% block content %}
-<<<<<<< HEAD
 <div class="main-layout">
-  <!-- LEFT PANEL (hidden in chat view) -->
-  <div class="game-box" style="display:none">
-    <a href="{{ url_for('game') }}">
-      🎮 Game_1
-    </a>
-  </div>
-=======
-<main class="main-grid">
-  {% include 'games/_panel.html' %}
-  <aside class="chat-col">
-
->>>>>>> 3282952 (Split chat layout into game panel + chat panel, mount games module in /chat)
-
+  <!-- LEFT PANEL (games entry tile) -->
+  <div class="game-box" style="position:relative; padding:20px;">
+  <a href="{{ url_for('games') }}" 
+     style="position:absolute; top:20px; left:20px;
+            display:flex; align-items:center; justify-content:center;
+            width:90px; height:90px;
+            background:#e9eef3; border-radius:12px;
+            font-size:20px; text-decoration:none; color:#333;
+            box-shadow:0 2px 6px rgba(0,0,0,0.15);">
+    🎮 Game_1
+  </a>
+</div>
 
 
 
@@ -82,14 +80,9 @@ window.oldestMessageId = parseInt(firstMsgId);
 </div>
 </div>
 </div>
-
-
-  </aside>
-</main>
-
+</div>
 
 <div class="popup" id="popup"></div>
-
 
 <!-- Pass is_mod to JS -->
 <script>
@@ -171,7 +164,8 @@ const dot = document.createElement('span');
 dot.className = 'status-dot emoji-dot';
 dot.textContent = emoji;
 dot.title = userObj.afk ? 'AFK' : 'Online';
-dot.style.marginRight = '10px';
+dot.style.marginRight = '12px';  // ← ✅ add spacing
+dot.style.marginRight = '10px';  // ← ✅ add spacing
 li.appendChild(dot);
 
 
@@ -304,13 +298,12 @@ reader.readAsDataURL(file);
 });
 </script> <!-- ← this closes your chat script -->
 
-<!-- Games module (LEFT panel inside /chat) -->
-<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}?v=1"></script>
+<!-- Games module (isolated UI) -->
+<script type="module" src="{{ url_for('static', filename='games/games.module.js') }}"></script>
 <script>
-  // Mount into the left panel container defined in templates/games/_panel.html
-  window.XeriGames?.mount?.('#gx-root-chat', {
+  // Mount the games app into the left panel
+  window.XeriGames.mount('#gx-root', {
     username: document.body.dataset.username || "{{ username }}"
   });
 </script>
-
 {% endblock %}

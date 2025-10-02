@@ -407,3 +407,56 @@ line-height: 1;
   list-style-type: none;
   padding-left: 0;
 }
+
+/* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 500px; /* left flexible, right fixed */
+  gap: 20px;
+  padding: 0 16px;
+}
+
+/* LEFT gray game panel */
+.game-panel {
+  position: relative;
+  height: 78vh;
+  background: linear-gradient(180deg, #dfe5ea, #d6dbe0);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+}
+
+/* “Game_1” tile (top-left) */
+.game-tile {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #eef3f7;
+  color: #1c2a35;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+.game-tile .icon { font-size: 20px; }
+
+/* The inner gray fill (just covers the panel) */
+.game-canvas {
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #dfe5ea, #d6dbe0);
+}
+
+/* RIGHT chat column wrapper (visuals controlled by existing chat styles) */
+.chat-col {}
+
+/* Responsive */
+@media (max-width: 1100px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .chat-col { order: 2; }
+}
