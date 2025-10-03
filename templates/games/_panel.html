@@ -1,7 +1,6 @@
-{# templates/games/_panel.html #}
-<a class="game-tile" href="{{ url_for('game') }}" title="Open Game_1">
-  <span class="icon">🎮</span><span>Game_1</span>
+<a class="game-tile" href="{{ url_for('game_room', room_name='Game_1') }}">
+  <span class="icon">🎮</span>
+  <span>Game_1</span>
 </a>
 
-<!-- Mount point for the games module (left side inside chat) -->
 <div id="gx-root-chat"></div>

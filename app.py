@@ -133,6 +133,12 @@ def games():
 
 
 
+@app.route('/game/<room_name>')
+def game_room(room_name):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+    return render_template('game.html', username=session['username'], room=room_name)
+
 
 
 # === Socket.IO Events ===
