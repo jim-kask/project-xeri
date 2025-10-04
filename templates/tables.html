@@ -15,10 +15,28 @@
   body.dark-mode .tables-card .meta { color:#cbd5e1; }
   body:not(.dark-mode) .tables-card .meta { color:#374151; }
 
-  /* Move back button to bottom-left of left panel */
+  /* Left panel layout so Back can stick to bottom-left */
   .tables-aside { position:relative; padding-bottom:72px; }
-  .tables-back { position:absolute; left:16px; bottom:16px; }
+
+  /* Minimal rectangular Back button pinned bottom-left */
+  .back-btn {
+    position:absolute; left:16px; bottom:16px;
+    display:inline-flex; align-items:center; gap:6px;
+    padding:8px 12px; border-radius:8px; text-decoration:none; font-size:14px;
+    border:1px solid; box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  body.dark-mode .back-btn { background:#0b1220; color:#e5e7eb; border-color:#2b2f36; }
+  body:not(.dark-mode) .back-btn { background:#eef2f7; color:#111827; border-color:#cbd5e1; }
+
+  /* Left-panel title/subtitle contrast for dark mode */
+  .tables-title { margin-top:16px; }
+  .tables-subtitle { margin:6px 0 14px 0; font-size:14px; }
+  body.dark-mode .tables-title { color:#e5e7eb; }
+  body.dark-mode .tables-subtitle { color:#cbd5e1; }
+  body:not(.dark-mode) .tables-title { color:#111827; }
+  body:not(.dark-mode) .tables-subtitle { color:#374151; }
 </style>
+
 
 
 <div class="main-grid">
@@ -26,8 +44,9 @@
   <aside class="game-panel tables-aside">
     
 
-    <h2 style="margin-top:16px;">{{ room }} — Tables</h2>
-    <p>Welcome, {{ username }}! Choose an action below.</p>
+    <h2 class="tables-title">{{ room }} — Tables</h2>
+    <p class="tables-subtitle">Welcome, {{ username }}! Choose an action below.</p>
+
 
     <!-- Action buttons -->
     <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
@@ -42,7 +61,7 @@
       </button>
     </div>
 
-<a href="{{ url_for('chat') }}" class="game-tile tables-back" style="display:inline-flex;align-items:center;gap:8px;">
+<a href="{{ url_for('chat') }}" style="display:inline-flex;align-items:center;gap:8px;">
   ⬅ Back
 </a>
 
@@ -86,4 +105,7 @@ function joinRandomTable() {
   }
 }
 </script>
+
+<a href="{{ url_for('chat') }}" class="back-btn">⬅ Back</a>
+
 {% endblock %}
