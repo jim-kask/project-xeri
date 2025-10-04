@@ -32,6 +32,86 @@
 
 
 
+<style>
+  /* === Theme hooks for the Stress game mounted in #gx-root === */
+
+  /* inherit text color */
+  #gx-root { color: var(--text); }
+
+  /* Common surfaces in the game UI (broad selectors on purpose) */
+  #gx-root .board,
+  #gx-root .panel,
+  #gx-root .hud,
+  #gx-root .box,
+  #gx-root .surface,
+  #gx-root .controls {
+    background: var(--chat-bg);
+    color: var(--text);
+    border-radius: 10px;
+  }
+
+  /* Cards / piles (light defaults) */
+  #gx-root .card,
+  #gx-root .pile {
+    background: #faecd5;
+    border: 2px solid #1f2937;
+    border-radius: 10px;
+    color: #111827;
+  }
+
+  /* Hint / notice bar (light) */
+  #gx-root .hint,
+  #gx-root .notice {
+    background: #dbeafe;
+    color: #111827;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 8px 12px;
+  }
+
+  /* Primary buttons (keep brand color) */
+  #gx-root .btn,
+  #gx-root button {
+    background: #2563eb;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  #gx-root .btn:disabled,
+  #gx-root button:disabled { opacity: .6; cursor: default; }
+
+  /* === Dark-mode variants === */
+  body.dark-mode #gx-root .board,
+  body.dark-mode #gx-root .panel,
+  body.dark-mode #gx-root .hud,
+  body.dark-mode #gx-root .box,
+  body.dark-mode #gx-root .surface,
+  body.dark-mode #gx-root .controls {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: #2b2f36;
+  }
+
+  body.dark-mode #gx-root .card,
+  body.dark-mode #gx-root .pile {
+    background: #1f2937;
+    border-color: #374151;
+    color: #e5e7eb;
+  }
+
+  body.dark-mode #gx-root .hint,
+  body.dark-mode #gx-root .notice {
+    background: #0b1220;
+    color: #e5e7eb;
+    border-color: #2b2f36;
+  }
+</style>
+
+
+
+
   <!-- Mount point for your games module -->
   <div id="gx-root" style="margin-top:140px;"></div>
 </div>
