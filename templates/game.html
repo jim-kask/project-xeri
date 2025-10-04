@@ -148,8 +148,12 @@
 
 
   <!-- Mount point for your games module -->
-  <div id="gx-root" style="margin-top:140px;"></div>
-</div>
+  <!-- Primary mount -->
+<div id="gx-root" style="margin-top:140px; min-height:60vh;"></div>
+
+<!-- Fallback mount (some bundles expect this id) -->
+<div id="gx-root-chat" style="min-height:1px;"></div>
+
 
 
 
@@ -494,27 +498,25 @@ reader.readAsDataURL(file);
 </script> <!-- ← this closes your chat script -->
 
 <script type="module">
-  const mountSelector = '#gx-root';
+  const selectors = ['#gx-root', '#gx-root-chat'];
+  const mountSelector = selectors.find(s => document.querySelector(s));
   const username = document.body.dataset.username || "{{ username }}";
   const isDark = () => document.body.classList.contains('dark-mode');
 
   function pickAPI(mod) {
-    // Prefer global if a UMD/IIFE bundle registered it
     if (window.XeriGames && typeof window.XeriGames.mount === 'function') return window.XeriGames;
-    // ES module default export
     if (mod?.default && typeof mod.default.mount === 'function') return mod.default;
-    // ES module named export
     if (mod && typeof mod.mount === 'function') return mod;
     return null;
   }
 
-  async function importModule(path) {
+  async function importESM(path) {
     try {
-      const mod = await import(path + `?v=${Date.now()}`); // cache-bust
-      console.log('[Xeri] Imported module:', path, mod);
+      const mod = await import(path + `?v=${Date.now()}`);
+      console.log('[Xeri] Imported ESM:', path);
       return pickAPI(mod);
     } catch (e) {
-      console.warn('[Xeri] ESM import failed for', path, e);
+      console.warn('[Xeri] ESM import failed:', path, e);
       return null;
     }
   }
@@ -531,21 +533,30 @@ reader.readAsDataURL(file);
   }
 
   async function loadAndMount() {
-    // Try the ESM bundle first
-    let api =
-      await importModule("{{ url_for('static', filename='games/games.module.js') }}") ||
-      await importModule("{{ url_for('static', filename='games/stress/stress.js') }}");
+    // Try both possible entry files (module and stress bundle)
+    const paths = [
+      "{{ url_for('static', filename='games/games.module.js') }}",
+      "{{ url_for('static', filename='games/stress/stress.js') }}"
+    ];
 
-    // Fallback to classic script loading if no ESM exports
+    let api = null;
+
+    // 1) Try as ES modules
+    for (const p of paths) {
+      api = await importESM(p);
+      if (api) break;
+    }
+
+    // 2) Fallback: classic scripts (UMD/IIFE)
     if (!api) {
-      api =
-        await loadClassic("{{ url_for('static', filename='games/games.module.js') }}") ||
-        await loadClassic("{{ url_for('static', filename='games/stress/stress.js') }}");
-
-      // As a last resort, wait a moment for a global to appear
+      for (const p of paths) {
+        api = await loadClassic(p);
+        if (api) break;
+      }
       if (!api) {
+        // last resort: wait briefly for a global to appear
         for (let i = 0; i < 10 && !api; i++) {
-          await new Promise(r => setTimeout(r, 150));
+          await new Promise(r => setTimeout(r, 120));
           if (window.XeriGames && typeof window.XeriGames.mount === 'function') {
             api = window.XeriGames;
           }
@@ -554,7 +565,7 @@ reader.readAsDataURL(file);
     }
 
     if (!api || typeof api.mount !== 'function') {
-      console.error('❌ Could not find XeriGames.mount(). Check which bundle exports it.');
+      console.error('❌ Could not find XeriGames.mount().');
       return;
     }
 
@@ -571,6 +582,7 @@ reader.readAsDataURL(file);
 
   loadAndMount();
 </script>
+
 
 
 {% endblock %}
