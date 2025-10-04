@@ -393,11 +393,8 @@ line-height: 1;
 
 
 
-/* “Game_1” tile (top-left) */
+/* Base pill style for any tile/button */
 .game-tile {
-  position: absolute;
-  top: 18px;
-  left: 18px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -408,17 +405,25 @@ line-height: 1;
   text-decoration: none;
   font-weight: 600;
   box-shadow: 0 6px 16px rgba(0,0,0,0.15);
-  cursor: pointer;                     /* 👈 now shows hand cursor */
+  cursor: pointer;
   transition: transform .12s ease, box-shadow .12s ease;
+  position: static; /* ⬅️ no global positioning */
 }
+
+/* Only the tile inside the LEFT game panel is positioned */
+.game-panel > .game-tile {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+}
+
 .game-tile:hover {
   transform: translateY(-1px);
   box-shadow: 0 10px 22px rgba(0,0,0,0.2);
 }
-.game-tile:active {
-  transform: translateY(0);
-}
+.game-tile:active { transform: translateY(0); }
 .game-tile .icon { font-size: 20px; }
+
 
 
 
