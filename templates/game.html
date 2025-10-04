@@ -494,30 +494,82 @@ reader.readAsDataURL(file);
 </script> <!-- ← this closes your chat script -->
 
 <script type="module">
-  // Import the module (works with default or named exports; also falls back to window)
-  import XeriDefault, * as XeriAll from "{{ url_for('static', filename='games/games.module.js') }}";
-  const Xeri = (window.XeriGames ?? (XeriDefault && typeof XeriDefault.mount === 'function' ? XeriDefault : XeriAll));
-
   const mountSelector = '#gx-root';
-  const mountEl = document.querySelector(mountSelector);
-  if (!mountEl) { console.error('No #gx-root found'); }
-
+  const username = document.body.dataset.username || "{{ username }}";
   const isDark = () => document.body.classList.contains('dark-mode');
 
-  if (!Xeri || typeof Xeri.mount !== 'function') {
-    console.error('XeriGames module not loaded or no mount() export', { XeriDefault, XeriAll, windowXeri: window.XeriGames });
-  } else {
-    Xeri.mount(mountSelector, {
-      username: document.body.dataset.username || "{{ username }}",
+  function pickAPI(mod) {
+    // Prefer global if a UMD/IIFE bundle registered it
+    if (window.XeriGames && typeof window.XeriGames.mount === 'function') return window.XeriGames;
+    // ES module default export
+    if (mod?.default && typeof mod.default.mount === 'function') return mod.default;
+    // ES module named export
+    if (mod && typeof mod.mount === 'function') return mod;
+    return null;
+  }
+
+  async function importModule(path) {
+    try {
+      const mod = await import(path + `?v=${Date.now()}`); // cache-bust
+      console.log('[Xeri] Imported module:', path, mod);
+      return pickAPI(mod);
+    } catch (e) {
+      console.warn('[Xeri] ESM import failed for', path, e);
+      return null;
+    }
+  }
+
+  function loadClassic(path) {
+    return new Promise(resolve => {
+      const s = document.createElement('script');
+      s.src = path + `?v=${Date.now()}`;
+      s.async = true;
+      s.onload = () => resolve(pickAPI(null));
+      s.onerror = () => resolve(null);
+      document.head.appendChild(s);
+    });
+  }
+
+  async function loadAndMount() {
+    // Try the ESM bundle first
+    let api =
+      await importModule("{{ url_for('static', filename='games/games.module.js') }}") ||
+      await importModule("{{ url_for('static', filename='games/stress/stress.js') }}");
+
+    // Fallback to classic script loading if no ESM exports
+    if (!api) {
+      api =
+        await loadClassic("{{ url_for('static', filename='games/games.module.js') }}") ||
+        await loadClassic("{{ url_for('static', filename='games/stress/stress.js') }}");
+
+      // As a last resort, wait a moment for a global to appear
+      if (!api) {
+        for (let i = 0; i < 10 && !api; i++) {
+          await new Promise(r => setTimeout(r, 150));
+          if (window.XeriGames && typeof window.XeriGames.mount === 'function') {
+            api = window.XeriGames;
+          }
+        }
+      }
+    }
+
+    if (!api || typeof api.mount !== 'function') {
+      console.error('❌ Could not find XeriGames.mount(). Check which bundle exports it.');
+      return;
+    }
+
+    api.mount(mountSelector, {
+      username,
       theme: isDark() ? 'dark' : 'light'
     });
 
-    // Keep theme in sync if API present
-    if (typeof Xeri.setTheme === 'function') {
-      new MutationObserver(() => Xeri.setTheme(isDark() ? 'dark' : 'light'))
+    if (typeof api.setTheme === 'function') {
+      new MutationObserver(() => api.setTheme(isDark() ? 'dark' : 'light'))
         .observe(document.body, { attributes: true, attributeFilter: ['class'] });
     }
   }
+
+  loadAndMount();
 </script>
 
 
