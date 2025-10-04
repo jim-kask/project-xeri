@@ -231,23 +231,7 @@ document.body.dataset.isMod = "{{ 'true' if is_mod else 'false' }}";
 
 {% block scripts %}
 
-<script>
-  // Mirror the site's theme to the game mount so CSS can key off it if needed
-  (function () {
-    const mount = document.getElementById('gx-root');
-    if (!mount) return;
 
-    function syncTheme() {
-      const isDark = document.body.classList.contains('dark-mode');
-      mount.classList.toggle('dark-mode', isDark);
-      mount.dataset.theme = isDark ? 'dark' : 'light';
-    }
-
-    // Initial sync + react to future toggles
-    syncTheme();
-    new MutationObserver(syncTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] });
-  })();
-</script>
 
 
 
@@ -512,9 +496,80 @@ reader.readAsDataURL(file);
 <!-- Games module (isolated UI) -->
 <script type="module" src="{{ url_for('static', filename='games/games.module.js') }}"></script>
 <script>
-  // Mount the games app into the left panel
-  window.XeriGames.mount('#gx-root', {
-    username: document.body.dataset.username || "{{ username }}"
+(function () {
+  const mountSelector = '#gx-root';
+  const mountEl = document.querySelector(mountSelector);
+  if (!mountEl) return;
+
+  const isDark = () => document.body.classList.contains('dark-mode');
+
+  // 1) Mount with a theme hint (if the module supports it)
+  try {
+    const opts = {
+      username: document.body.dataset.username || "{{ username }}",
+      theme: isDark() ? 'dark' : 'light'
+    };
+    if (window.XeriGames && typeof window.XeriGames.mount === 'function') {
+      window.XeriGames.mount(mountSelector, opts);
+    }
+  } catch(e) { console.warn('XeriGames.mount failed:', e); }
+
+  // 2) If the module exposes a setTheme API, keep it synced
+  const syncThemeAPI = () => {
+    if (window.XeriGames && typeof window.XeriGames.setTheme === 'function') {
+      window.XeriGames.setTheme(isDark() ? 'dark' : 'light');
+    }
+  };
+
+  // 3) Inject dark-mode CSS into any Shadow DOM under #gx-root
+  const DARK_CSS = `
+    :host, :host * { color:#e5e7eb !important; }
+    :host, :host div, :host section, :host article, :host aside, :host header, :host footer {
+      background:#0b1220 !important;
+      border-color:#2b2f36 !important;
+    }
+    button { background:#2563eb !important; color:#fff !important; }
+    canvas, svg { background:#0b1220 !important; }
+  `;
+
+  function injectIntoShadow(shadowRoot) {
+    if (!shadowRoot || shadowRoot.__xeriDarkInjected) return;
+    const style = document.createElement('style');
+    style.textContent = DARK_CSS;
+    shadowRoot.appendChild(style);
+    shadowRoot.__xeriDarkInjected = true;
+  }
+
+  function scanForShadowRoots(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    while (walker.nextNode()) {
+      const el = walker.currentNode;
+      if (el.shadowRoot) injectIntoShadow(el.shadowRoot);
+    }
+  }
+
+  // initial scan (in case the root is already mounted)
+  scanForShadowRoots(mountEl);
+
+  // observe future nodes (module often creates components after mount)
+  const mo = new MutationObserver(muts => {
+    muts.forEach(m => {
+      m.addedNodes && m.addedNodes.forEach(node => {
+        if (node.nodeType === 1) {
+          if (node.shadowRoot) injectIntoShadow(node.shadowRoot);
+          scanForShadowRoots(node);
+        }
+      });
+    });
   });
+  mo.observe(mountEl, { subtree: true, childList: true });
+
+  // 4) Observe body class changes to update theme + (re)apply where needed
+  new MutationObserver(() => {
+    syncThemeAPI();
+    // injected <style> stays; if new shadow roots appear later, mo above handles them
+  }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
 </script>
+
 {% endblock %}
