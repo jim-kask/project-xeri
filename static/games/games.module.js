@@ -76,6 +76,10 @@ if(this.state.route==='tables'){
 const {gameId} = this.state.params; const meta = await this.api(`/api/games/${gameId}`);
 const tables = await this.api(`/api/games/${gameId}/tables`);
 root.innerHTML = `
-<div class="bar">
-<div class="row">
-})();
+  <div class="bar">
+    <div class="row">
+      <!-- TODO: Add content here (buttons, tables list, etc.) -->
+    </div>
+  </div>
+`;
+})();  // ← keep this closure AFTER the backtick
