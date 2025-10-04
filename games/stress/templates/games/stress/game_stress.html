@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Stress{% endblock %}
+
+{% block content %}
+<div id="stress-root"
+     data-username="{{ username|e }}"
+     data-room="{{ room|default('lobby')|e }}">
+
+  <div class="stress-board">
+    <div id="opponent" class="hand-section">Opponent: <span id="opp-count">0 cards</span></div>
+
+    <div id="hint-bar" class="hint-bar" aria-live="polite" role="status">
+  Select a card, then click a pile. If you’re stuck, press Draw.
+</div>
+
+<div id="center-piles">
+  <button class="pile" id="pile-left"   data-pile="0" aria-label="Play to left pile">?</button>
+  <button class="pile" id="pile-right"  data-pile="1" aria-label="Play to right pile">?</button>
+</div>
+
+
+
+    <div id="your-hand" class="hand-section"></div>
+
+    <button id="draw-btn">Draw</button>
+  </div>
+</div>
+
+<link rel="stylesheet" href="{{ url_for('stress.static', filename='games/stress/stress.css') }}">
+<script src="{{ url_for('stress.static', filename='games/stress/stress.js') }}"></script>
+{% endblock %}
