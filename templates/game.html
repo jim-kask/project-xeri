@@ -116,16 +116,7 @@ document.body.dataset.isMod = "{{ 'true' if is_mod else 'false' }}";
 
 {% block scripts %}
 <!-- Ensure saved dark mode applies on this page -->
-<script>
-/* Ensure the saved theme is applied on this page, too */
-(function () {
-  var KEY = 'xeri-theme';
-  var saved = localStorage.getItem(KEY);
-  var dark = saved === 'dark';
-  // Apply class to <body> to match our CSS selectors
-  document.body.classList.toggle('dark-mode', dark);
-})();
-</script>
+
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 

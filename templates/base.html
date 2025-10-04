@@ -17,7 +17,8 @@
 
   <script>
     const toggleBtn = document.getElementById('darkToggle');
-    const root = document.documentElement;
+    const root = document.body;
+
 
     if (localStorage.getItem('theme') === 'dark') {
       root.classList.add('dark-mode');
