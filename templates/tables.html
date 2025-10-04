@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ room }} — Tables{% endblock %}
+
+{% block content %}
+<div class="main-grid">
+  <!-- Left panel -->
+  <aside class="game-panel">
+    <a href="{{ url_for('chat') }}" 
+       class="game-tile" 
+       style="display:inline-flex;align-items:center;gap:8px;">
+      ⬅ Back
+    </a>
+
+    <h2 style="margin-top:16px;">{{ room }} — Tables</h2>
+    <p>Welcome, {{ username }}! Choose an action below.</p>
+
+    <!-- Action buttons -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+      <button onclick="createTable()" 
+              style="padding:10px;border-radius:10px;border:none;background:#2563eb;color:white;cursor:pointer;">
+        ➕ Create Table
+      </button>
+
+      <button onclick="joinRandomTable()" 
+              style="padding:10px;border-radius:10px;border:none;background:#10b981;color:white;cursor:pointer;">
+        🎲 Join Random Table
+      </button>
+    </div>
+  </aside>
+
+  <!-- Right panel: tables list -->
+  <section class="chat-panel" style="padding:16px;">
+    <h3 style="margin-bottom:14px;">Available Tables</h3>
+    <div id="tables-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+      {% for t in tables %}
+      <div style="border-radius:14px;padding:14px;background:#111827;border:1px solid #2b2f36;">
+        <div style="font-weight:600;margin-bottom:6px;">{{ t.name }}</div>
+        <div style="font-size:14px;opacity:.8;">Players: {{ t.players }}</div>
+        <div style="font-size:14px;opacity:.8;">Status: {{ t.status }}</div>
+        <div style="margin-top:10px;">
+          <a href="{{ url_for('game_room', room_name=room) }}?table={{ t.id }}" 
+             class="game-tile" 
+             style="padding:6px 10px;border-radius:10px;text-decoration:none;">
+             Join
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+
+<script>
+function createTable() {
+  alert("🛠️ Create Table feature coming soon!");
+}
+
+function joinRandomTable() {
+  const tables = {{ tables|tojson }};
+  const openTables = tables.filter(t => t.status === "Open");
+  if (openTables.length > 0) {
+    const random = openTables[Math.floor(Math.random() * openTables.length)];
+    window.location.href = `/game/{{ room }}?table=${random.id}`;
+  } else {
+    alert("😕 No open tables available right now.");
+  }
+}
+</script>
+{% endblock %}
