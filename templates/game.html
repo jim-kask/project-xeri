@@ -31,6 +31,41 @@
 </style>
 
 
+<style>
+  /* --- Dark-mode enforcement for everything inside the game mount --- */
+  /* Light defaults (do nothing special here; your module keeps its own styles) */
+
+  /* Dark mode: force readable colors inside the game tree */
+  body.dark-mode #gx-root,
+  body.dark-mode #gx-root * {
+    color: #e5e7eb !important;
+    border-color: #2b2f36 !important;
+  }
+
+  /* Give common container elements a dark surface so backgrounds don’t stay light */
+  body.dark-mode #gx-root div,
+  body.dark-mode #gx-root section,
+  body.dark-mode #gx-root article,
+  body.dark-mode #gx-root aside,
+  body.dark-mode #gx-root header,
+  body.dark-mode #gx-root footer {
+    background-color: #0b1220 !important;
+  }
+
+  /* Buttons stay branded but readable */
+  body.dark-mode #gx-root button {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+  }
+
+  /* Cards / piles often need a slightly lighter surface than the panel */
+  body.dark-mode #gx-root .card,
+  body.dark-mode #gx-root .pile {
+    background-color: #1f2937 !important;
+  }
+</style>
+
+
 
 <style>
   /* === Theme hooks for the Stress game mounted in #gx-root === */
@@ -195,7 +230,25 @@ document.body.dataset.isMod = "{{ 'true' if is_mod else 'false' }}";
 
 
 {% block scripts %}
-<!-- Ensure saved dark mode applies on this page -->
+
+<script>
+  // Mirror the site's theme to the game mount so CSS can key off it if needed
+  (function () {
+    const mount = document.getElementById('gx-root');
+    if (!mount) return;
+
+    function syncTheme() {
+      const isDark = document.body.classList.contains('dark-mode');
+      mount.classList.toggle('dark-mode', isDark);
+      mount.dataset.theme = isDark ? 'dark' : 'light';
+    }
+
+    // Initial sync + react to future toggles
+    syncTheme();
+    new MutationObserver(syncTheme).observe(document.body, { attributes: true, attributeFilter: ['class'] });
+  })();
+</script>
+
 
 
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
