@@ -27,6 +27,18 @@
   /* Left panel text contrast */
   .tables-title { margin-top:16px; }
   .tables-subtitle { margin:6px 0 14px 0; font-size:14px; }
+
+/* Left panel dark-mode background so text remains readable */
+body.dark-mode .game-panel {
+  background:#0b1220;          /* match the right panel vibe */
+  color:#e5e7eb;
+  border-color:#2b2f36;        /* if your panel has a border */
+}
+
+/* (Optional) ensure headings keep good contrast */
+body.dark-mode .game-panel .tables-title   { color:#e5e7eb; }
+body.dark-mode .game-panel .tables-subtitle{ color:#cbd5e1; }
+
   body.dark-mode .tables-title { color:#e5e7eb; }
   body.dark-mode .tables-subtitle { color:#cbd5e1; }
   body:not(.dark-mode) .tables-title { color:#111827; }
