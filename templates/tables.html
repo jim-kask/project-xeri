@@ -3,22 +3,17 @@
 {% block title %}{{ room }} — Tables{% endblock %}
 
 {% block content %}
-
 <style>
-  /* Card styling that adapts to theme */
+  /* Adaptive cards (light/dark) */
   .tables-card { border-radius:14px; padding:14px; border:1px solid; }
   body.dark-mode .tables-card { background:#111827; color:#e5e7eb; border-color:#2b2f36; }
   body:not(.dark-mode) .tables-card { background:#f3f4f6; color:#111827; border-color:#d1d5db; }
-
-  /* Meta rows: clearer in light mode, softer in dark */
   .tables-card .meta { font-size:14px; margin-top:2px; }
   body.dark-mode .tables-card .meta { color:#cbd5e1; }
   body:not(.dark-mode) .tables-card .meta { color:#374151; }
 
-  /* Left panel layout so Back can stick to bottom-left */
+  /* Left panel layout + bottom-left Back button */
   .tables-aside { position:relative; padding-bottom:72px; }
-
-  /* Minimal rectangular Back button pinned bottom-left */
   .back-btn {
     position:absolute; left:16px; bottom:16px;
     display:inline-flex; align-items:center; gap:6px;
@@ -28,7 +23,7 @@
   body.dark-mode .back-btn { background:#0b1220; color:#e5e7eb; border-color:#2b2f36; }
   body:not(.dark-mode) .back-btn { background:#eef2f7; color:#111827; border-color:#cbd5e1; }
 
-  /* Left-panel title/subtitle contrast for dark mode */
+  /* Left panel text contrast */
   .tables-title { margin-top:16px; }
   .tables-subtitle { margin:6px 0 14px 0; font-size:14px; }
   body.dark-mode .tables-title { color:#e5e7eb; }
@@ -37,19 +32,14 @@
   body:not(.dark-mode) .tables-subtitle { color:#374151; }
 </style>
 
-
-
 <div class="main-grid">
-  <!-- Left panel -->
+  <!-- LEFT PANEL -->
   <aside class="game-panel tables-aside">
-    
-
     <h2 class="tables-title">{{ room }} — Tables</h2>
     <p class="tables-subtitle">Welcome, {{ username }}! Choose an action below.</p>
 
-
     <!-- Action buttons -->
-    <div style="display:flex;flex-direction:column;gap:10px;margin-top:20px;">
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
       <button onclick="createTable()" 
               style="padding:10px;border-radius:10px;border:none;background:#2563eb;color:white;cursor:pointer;">
         ➕ Create Table
@@ -61,16 +51,14 @@
       </button>
     </div>
 
-<a href="{{ url_for('chat') }}" style="display:inline-flex;align-items:center;gap:8px;">
-  ⬅ Back
-</a>
-
+    <!-- The ONLY back button (bottom-left inside the panel) -->
+    <a href="{{ url_for('chat') }}" class="back-btn">⬅ Back</a>
   </aside>
 
-  <!-- Right panel: tables list -->
+  <!-- RIGHT PANEL -->
   <section class="chat-panel" style="padding:16px;">
     <h3 style="margin-bottom:14px;">Available Tables</h3>
-    <div id="tables-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
+    <div id="tables-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
       {% for t in tables %}
       <div class="tables-card">
         <div style="font-weight:600;margin-bottom:6px;">{{ t.name }}</div>
@@ -93,7 +81,6 @@
 function createTable() {
   alert("🛠️ Create Table feature coming soon!");
 }
-
 function joinRandomTable() {
   const tables = {{ tables|tojson }};
   const openTables = tables.filter(t => t.status === "Open");
@@ -105,7 +92,4 @@ function joinRandomTable() {
   }
 }
 </script>
-
-<a href="{{ url_for('chat') }}" class="back-btn">⬅ Back</a>
-
 {% endblock %}
