@@ -78,18 +78,42 @@
 </div>
 
 <script>
-function createTable() {
-  alert("🛠️ Create Table feature coming soon!");
-}
-function joinRandomTable() {
-  const tables = {{ tables|tojson }};
-  const openTables = tables.filter(t => t.status === "Open");
-  if (openTables.length > 0) {
-    const random = openTables[Math.floor(Math.random() * openTables.length)];
-    window.location.href = `/game/{{ room }}?table=${random.id}`;
-  } else {
-    alert("😕 No open tables available right now.");
+async function createTable() {
+  try {
+    const res = await fetch("{{ url_for('stress.api_create') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "" }) // you can pass a name later
+    });
+    const data = await res.json();
+    if (data && data.url) {
+      window.location.href = data.url; // -> /game/stress/<room>
+    } else {
+      alert(data?.error || "Could not create table.");
+    }
+  } catch (e) {
+    alert("Network error while creating table.");
   }
 }
+
+async function joinRandomTable() {
+  // for now, same as create
+  try {
+    const res = await fetch("{{ url_for('stress.api_create') }}", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ join_random: true })
+    });
+    const data = await res.json();
+    if (data && data.url) {
+      window.location.href = data.url;
+    } else {
+      alert(data?.error || "No open tables available.");
+    }
+  } catch (e) {
+    alert("Network error while joining a table.");
+  }
+}
+
 </script>
 {% endblock %}
