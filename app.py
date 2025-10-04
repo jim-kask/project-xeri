@@ -139,6 +139,26 @@ def game_room(room_name):
         return redirect(url_for('login'))
     return render_template('game.html', username=session['username'], room=room_name)
 
+@app.route('/game/<room_name>/tables')
+def game_tables(room_name):
+    if 'username' not in session:
+        return redirect(url_for('login'))
+
+    # TODO: replace with real DB query later
+    tables = [
+        {"id": 1, "name": "Table 1", "players": 2, "status": "Open"},
+        {"id": 2, "name": "Table 2", "players": 4, "status": "In-Game"},
+        {"id": 3, "name": "Table 3", "players": 1, "status": "Open"},
+    ]
+
+    return render_template(
+        'tables.html',
+        username=session['username'],
+        room=room_name,
+        tables=tables
+    )
+
+
 
 
 # === Socket.IO Events ===

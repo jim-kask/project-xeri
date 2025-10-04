@@ -111,6 +111,18 @@ let oldestMessageId = window.oldestMessageId || null;
 let loadingOlderMessages = false;
 
 const socket = io();
+const ROOM = "{{ room|default('') }}";
+
+// If we're on a room page, auto-join that Socket.IO room
+if (ROOM) {
+  socket.on("connect", () => {
+    socket.emit("join_room", {
+      room: ROOM,
+      username: document.body.dataset.username || "{{ username }}"
+    });
+  });
+}
+
 const chatbox = document.getElementById('chatbox');
 const form = document.getElementById('chat-form');
 const messageInput = document.getElementById('message');
@@ -231,11 +243,43 @@ form.addEventListener('submit', (e) => {
 e.preventDefault();
 const msg = messageInput.value.trim();
 if (msg) {
-socket.emit('chat', msg);
-messageInput.value = '';
-socket.emit('stop_typing');
+  if (ROOM) {
+    // New room-scoped event
+    socket.emit('chat_message', {
+      room: ROOM,
+      username: document.body.dataset.username || "{{ username }}",
+      message: msg
+    });
+  } else {
+    // Legacy/global event
+    socket.emit('chat', msg);
+  }
+  messageInput.value = '';
+  socket.emit('stop_typing');
 }
+
 });
+
+
+// Room-scoped message listener (new)
+// Server should emit "chat_message" to a specific room
+socket.on("chat_message", (data) => {
+  const div = document.createElement('div');
+  div.className = 'chat-message';
+  div.dataset.id = data.id || "";
+
+  let formattedText = (data.message || data.text || "").replace(/\n/g, "<br>");
+  let inner = `<span>${data.timestamp || ''} - <strong>${data.username || 'Unknown'}</strong>: ${formattedText}</span>`;
+
+  if (document.body.dataset.isMod === 'true' && data.id) {
+    inner += `<span class="admin-controls"><button onclick="deleteMessage(${data.id})">🗑️</button></span>`;
+  }
+  div.innerHTML = inner;
+  chatbox.appendChild(div);
+  chatbox.scrollTop = chatbox.scrollHeight;
+  showPopup(`${data.username || 'Someone'} sent a message`);
+});
+
 
 socket.on('chat', (data) => {
 const div = document.createElement('div');
