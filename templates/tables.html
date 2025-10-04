@@ -83,7 +83,7 @@ async function createTable() {
     const res = await fetch("{{ url_for('stress.api_create') }}", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "" }) // you can pass a name later
+      body: JSON.stringify({ name: "" })
     });
     const data = await res.json();
     if (data && data.url) {
@@ -91,13 +91,12 @@ async function createTable() {
     } else {
       alert(data?.error || "Could not create table.");
     }
-  } catch (e) {
+  } catch {
     alert("Network error while creating table.");
   }
 }
 
 async function joinRandomTable() {
-  // for now, same as create
   try {
     const res = await fetch("{{ url_for('stress.api_create') }}", {
       method: "POST",
@@ -110,10 +109,11 @@ async function joinRandomTable() {
     } else {
       alert(data?.error || "No open tables available.");
     }
-  } catch (e) {
+  } catch {
     alert("Network error while joining a table.");
   }
 }
+
 
 </script>
 {% endblock %}
