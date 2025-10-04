@@ -144,12 +144,8 @@ def game_tables(room_name):
     if 'username' not in session:
         return redirect(url_for('login'))
 
-    # TODO: replace with real DB query later
-    tables = [
-        {"id": 1, "name": "Table 1", "players": 2, "status": "Open"},
-        {"id": 2, "name": "Table 2", "players": 4, "status": "In-Game"},
-        {"id": 3, "name": "Table 3", "players": 1, "status": "Open"},
-    ]
+    # Placeholder for future DB query (currently no tables)
+    tables = []
 
     return render_template(
         'tables.html',
@@ -157,6 +153,7 @@ def game_tables(room_name):
         room=room_name,
         tables=tables
     )
+
 
 
 
