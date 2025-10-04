@@ -3,14 +3,28 @@
 {% block title %}{{ room }} — Tables{% endblock %}
 
 {% block content %}
+
+<style>
+  /* Card styling that adapts to theme */
+  .tables-card { border-radius:14px; padding:14px; border:1px solid; }
+  body.dark-mode .tables-card { background:#111827; color:#e5e7eb; border-color:#2b2f36; }
+  body:not(.dark-mode) .tables-card { background:#f3f4f6; color:#111827; border-color:#d1d5db; }
+
+  /* Meta rows: clearer in light mode, softer in dark */
+  .tables-card .meta { font-size:14px; margin-top:2px; }
+  body.dark-mode .tables-card .meta { color:#cbd5e1; }
+  body:not(.dark-mode) .tables-card .meta { color:#374151; }
+
+  /* Move back button to bottom-left of left panel */
+  .tables-aside { position:relative; padding-bottom:72px; }
+  .tables-back { position:absolute; left:16px; bottom:16px; }
+</style>
+
+
 <div class="main-grid">
   <!-- Left panel -->
-  <aside class="game-panel">
-    <a href="{{ url_for('chat') }}" 
-       class="game-tile" 
-       style="display:inline-flex;align-items:center;gap:8px;">
-      ⬅ Back
-    </a>
+  <aside class="game-panel tables-aside">
+    
 
     <h2 style="margin-top:16px;">{{ room }} — Tables</h2>
     <p>Welcome, {{ username }}! Choose an action below.</p>
@@ -27,6 +41,11 @@
         🎲 Join Random Table
       </button>
     </div>
+
+<a href="{{ url_for('chat') }}" class="game-tile tables-back" style="display:inline-flex;align-items:center;gap:8px;">
+  ⬅ Back
+</a>
+
   </aside>
 
   <!-- Right panel: tables list -->
@@ -34,10 +53,10 @@
     <h3 style="margin-bottom:14px;">Available Tables</h3>
     <div id="tables-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;">
       {% for t in tables %}
-      <div style="border-radius:14px;padding:14px;background:#111827;border:1px solid #2b2f36;">
+      <div class="tables-card">
         <div style="font-weight:600;margin-bottom:6px;">{{ t.name }}</div>
-        <div style="font-size:14px;opacity:.8;">Players: {{ t.players }}</div>
-        <div style="font-size:14px;opacity:.8;">Status: {{ t.status }}</div>
+        <div class="meta">Players: {{ t.players }}</div>
+        <div class="meta">Status: {{ t.status }}</div>
         <div style="margin-top:10px;">
           <a href="{{ url_for('game_room', room_name=room) }}?table={{ t.id }}" 
              class="game-tile" 
