@@ -95,7 +95,7 @@ body.dark-mode .game-panel .tables-subtitle{ color:#cbd5e1; }
 <script>
 async function createTable() {
   try {
-    const res = await fetch("{{ url_for('stress.api_create') }}", {
+    const res = await fetch("{{ url_for('games_api.create_table') }}", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "" })
@@ -113,11 +113,11 @@ async function createTable() {
 
 async function joinRandomTable() {
   try {
-    const res = await fetch("{{ url_for('stress.api_create') }}", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ join_random: true })
-    });
+    const res = await fetch("{{ url_for('games_api.join_random_table') }}", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" }
+});
+
     const data = await res.json();
     if (data && data.url) {
       window.location.href = data.url;
@@ -142,7 +142,7 @@ async function joinRandomTable() {
   })();
 
   async function refresh() {
-    const res = await fetch('/game/stress/api/list');
+    const res = await fetch("{{ url_for('games_api.list_tables') }}");
     const data = await res.json();
     listEl.innerHTML = '';
     (data.rooms || []).forEach(r => {
