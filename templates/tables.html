@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 
-{% block title %}Stress — Tables{% endblock %}
+{% block title %}{{ room }} — Tables{% endblock %}
+
 
 
 {% block content %}
@@ -48,7 +49,8 @@ body.dark-mode .game-panel .tables-subtitle{ color:#cbd5e1; }
 <div class="main-grid">
   <!-- LEFT PANEL -->
   <aside class="game-panel tables-aside">
-    <h2 class="tables-title">Stress — Tables</h2>
+    <h2 class="tables-title">{{ room }} — Tables</h2>
+
     <p class="tables-subtitle">Welcome, {{ username }}! Choose an action below.</p>
 
     <!-- Action buttons -->
@@ -71,7 +73,6 @@ body.dark-mode .game-panel .tables-subtitle{ color:#cbd5e1; }
   <!-- RIGHT PANEL -->
   <section class="chat-panel" style="padding:16px;">
     <h3 style="margin-bottom:14px;">Available Tables</h3>
-<button id="createTableBtn">Create Table</button>
 
     <div id="tables-list" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;">
       {% for t in tables %}
@@ -95,7 +96,8 @@ body.dark-mode .game-panel .tables-subtitle{ color:#cbd5e1; }
 <script>
 async function createTable() {
   try {
-    const res = await fetch("{{ url_for('games_api.create_table') }}", {
+    const res = await fetch("{{ url_for('games_api.create_table', game_id=room) }}", {
+
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "" })
@@ -113,7 +115,8 @@ async function createTable() {
 
 async function joinRandomTable() {
   try {
-    const res = await fetch("{{ url_for('games_api.join_random_table') }}", {
+    const res = await fetch("{{ url_for('games_api.join_random_table', game_id=room) }}", {
+
   method: "POST",
   headers: { "Content-Type": "application/json" }
 });
@@ -142,13 +145,16 @@ async function joinRandomTable() {
   })();
 
   async function refresh() {
-    const res = await fetch("{{ url_for('games_api.list_tables') }}");
+    const res = await fetch("{{ url_for('games_api.list_tables', game_id=room) }}");
+
     const data = await res.json();
     listEl.innerHTML = '';
     (data.rooms || []).forEach(r => {
       const a = document.createElement('a');
-      a.href = `/game/stress/${r.id}`;
-      a.textContent = r.locked ? `🔒 ${r.id}` : r.id;
+      const baseJoin = "{{ url_for('game_room', room_name=room) }}"; // e.g., /game/Game_1
+      a.href = `${baseJoin}?table=${encodeURIComponent(r.id)}`;
+      a.textContent = r.locked ? `🔒 ${r.name || r.id}` : (r.name || r.id);
+
       a.style.display = 'block';
       a.style.margin = '6px 0';
       listEl.appendChild(a);
