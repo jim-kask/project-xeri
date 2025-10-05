@@ -9,7 +9,6 @@ from moderators import moderators
 from datetime import datetime, timedelta
 from flask import jsonify
 from games_service import init_socketio as init_games
-from games.stress import stress_bp, stress_namespace
 
 
 
@@ -26,9 +25,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
 
-# === Register Stress game (1v1) ===
-app.register_blueprint(stress_bp, url_prefix="/game/stress")
-socketio.on_namespace(stress_namespace)
+
 
 
 # === Initialize DB and assign mod flags ===
