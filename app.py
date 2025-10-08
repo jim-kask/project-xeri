@@ -9,6 +9,8 @@ from moderators import moderators
 from datetime import datetime, timedelta
 from flask import jsonify
 from games_service import init_socketio as init_games
+from games.stress.routes import stress_bp
+
 
 
 
@@ -22,11 +24,13 @@ if not DATABASE_URL:
 app.config['SQLALCHEMY_DATABASE_URI'] = DATABASE_URL
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+
+
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
 
-
-
+# --- Blueprint registration ---
+app.register_blueprint(stress_bp, url_prefix="/game/stress")
 
 # === Initialize DB and assign mod flags ===
 with app.app_context():
@@ -39,6 +43,7 @@ with app.app_context():
 
 # === Initialize Games module ===
 init_games(socketio, app)
+
 
 
 # === Global State ===
@@ -141,23 +146,15 @@ def games():
 def game_room(room_name):
     if 'username' not in session:
         return redirect(url_for('login'))
-    return render_template('game.html', username=session['username'], room=room_name)
+    # Send to Stress room page (served by the Stress blueprint)
+    return redirect(url_for('stress.room_page', room=room_name))
+
 
 @app.route('/game/<room_name>/tables')
 def game_tables(room_name):
-    if 'username' not in session:
-        return redirect(url_for('login'))
-    return render_template('tables.html', username=session['username'], room=room_name)
+    # Redirect all old "Game_1/tables" style paths to the Stress tables page
+    return redirect(url_for('stress.tables'))
 
-    # Placeholder for future DB query (currently no tables)
-    tables = []
-
-    return render_template(
-        'tables.html',
-        username=session['username'],
-        room=room_name,
-        tables=tables
-    )
 
 
 
