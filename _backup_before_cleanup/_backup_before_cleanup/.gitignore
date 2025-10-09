@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.log
+
+# Virtualenv
+venv/
+
+# Local and secrets
+.env
+instance/
+
+# DBs
+*.sqlite
+*.sqlite3

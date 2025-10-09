@@ -1,0 +1,458 @@
+/* === Variable Themes === */
+:root {
+--bg: linear-gradient(to right, #f0f2f5, #c9d6ff);
+--text: #000;
+--sidebar: #fff;
+--chat-bg: #fff;
+--input-bg: #fff;
+--popup-bg: #333;
+--popup-text: #fff;
+--transition: 0.4s ease;
+}
+
+.dark-mode {
+--bg: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+--text: #c9d1d9;
+--sidebar: #161b22;
+--chat-bg: #161b22;
+--input-bg: #0d1117;
+--popup-bg: #21262d;
+--popup-text: #c9d1d9;
+}
+
+/* === Global Styles === */
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background: var(--bg);
+color: var(--text);
+display: flex;
+flex-direction: column;
+align-items: center;
+justify-content: center;
+height: 100vh;
+margin: 0;
+transition: background var(--transition), color var(--transition);
+}
+
+h1 {
+font-size: 3em;
+color: var(--text);
+margin-bottom: 20px;
+}
+
+.link-button {
+display: inline-block;
+margin: 10px;
+padding: 12px 24px;
+font-size: 1em;
+text-decoration: none;
+color: white;
+background-color: #4A90E2;
+border-radius: 8px;
+transition: background-color 0.3s ease;
+}
+
+.link-button:hover {
+background-color: #357ABD;
+}
+
+/* === Form Buttons === */
+button {
+padding: 10px 20px;
+font-size: 1em;
+border: none;
+border-radius: 6px;
+background-color: #4A90E2;
+color: white;
+cursor: pointer;
+transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+button:hover {
+background-color: #357ABD;
+transform: translateY(-1px);
+}
+
+.dark-mode button {
+background-color: #2e8df4;
+color: white;
+}
+
+.dark-mode button:hover {
+background-color: #1d6fc2;
+}
+
+.dark-mode .input-area textarea {
+background-color: #0d1117;
+color: #c9d1d9;
+border: 1px solid #333;
+}
+
+
+/* === Form Fields === */
+label {
+color: var(--text);
+font-weight: 500;
+display: block;
+margin: 12px 0 4px;
+}
+
+input[type="text"],
+input[type="password"] {
+padding: 8px;
+width: 100%;
+max-width: 250px;
+border-radius: 4px;
+border: 1px solid #ccc;
+transition: border-color 0.3s ease;
+}
+
+input:focus {
+outline: none;
+border-color: #4A90E2;
+}
+
+/* === Layout === */
+
+
+
+
+.chat-box {
+display: flex;
+flex-direction: column;
+}
+
+/* === Chat Grid Layout === */
+.chat-box .container {
+display: grid;
+grid-template-columns: 200px 1fr;
+grid-template-rows: auto 1fr auto;
+grid-template-areas:
+"sidebar header"
+"sidebar chat"
+"sidebar input";
+height: 100%;
+min-height: 0;
+overflow: hidden;
+}
+
+.sidebar {
+grid-area: sidebar;
+display: flex;
+flex-direction: column;
+background: var(--sidebar);
+border-right: 2px solid #ccc;
+min-height: 0;
+}
+
+.users, .emojis {
+padding: 10px;
+border-bottom: 1px solid #ccc;
+flex: 1;
+overflow-y: auto;
+overflow-x: hidden; /* ✅ No horizontal scroll */
+min-height: 0;
+}
+
+/* Mute/unmute button inside sidebar */
+.sidebar button {
+background-color: transparent;
+color: var(--text);
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: 6px;
+padding: 4px 8px;
+margin-left: 8px;
+cursor: pointer;
+transition: background-color 0.3s ease;
+}
+
+.sidebar button:hover {
+background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark-mode .sidebar button {
+border-color: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .sidebar button:hover {
+background-color: rgba(255, 255, 255, 0.15);
+}
+
+.chat-area {
+grid-area: chat;
+padding: 10px;
+display: flex;
+flex-direction: column;
+overflow-y: auto;
+overflow-x: hidden;
+background: var(--chat-bg);
+min-height: 0;
+word-wrap: break-word;
+}
+
+.input-area {
+grid-area: input;
+padding: 10px;
+border-top: 2px solid #ccc;
+background: var(--input-bg);
+overflow: hidden;
+}
+
+.input-area form {
+display: flex;
+gap: 10px;
+}
+
+.input-area input[type="text"] {
+flex: 1;
+padding: 8px;
+}
+
+.input-area textarea {
+flex: 1;
+padding: 10px;
+font-size: 1em;
+border-radius: 6px;
+border: 1px solid #ccc;
+resize: none; /* 🚫 Prevents resizing */
+height: 40px;  /* ✅ Fixed height */
+line-height: 1.4;
+}
+
+
+/* === Messaging === */
+.chat-message {
+padding: 4px 0;
+border-bottom: 1px solid #eee;
+display: flex;
+justify-content: space-between;
+flex-wrap: wrap;
+word-break: break-word;
+white-space: normal;
+font-size: 0.95em; /* ✅ Slightly smaller */
+}
+
+.admin-controls button {
+background: none;
+border: none;
+cursor: pointer;
+font-size: 16px;
+margin-left: 8px;
+}
+
+.muted-label {
+color: red;
+font-style: italic;
+margin-left: 5px;
+}
+
+.typing-indicator {
+font-size: 0.9em;
+color: gray;
+margin-bottom: 6px;
+min-height: 1.2em;
+}
+
+/* === Popup & Emojis === */
+.popup {
+position: absolute;
+bottom: 10px;
+right: 20px;
+background: var(--popup-bg);
+color: var(--popup-text);
+padding: 6px 12px;
+border-radius: 6px;
+opacity: 0;
+transition: opacity 0.3s;
+}
+
+.popup.show {
+opacity: 1;
+}
+
+#emoji-buttons button {
+font-size: 20px;
+margin: 3px;
+cursor: pointer;
+background: none;
+border: none;
+}
+
+
+
+/* === Dark Mode Toggle Button === */
+.dark-toggle-btn {
+position: absolute;
+top: 20px;
+right: 20px;
+background: transparent;
+border: none;
+font-size: 24px;
+padding: 8px;
+border-radius: 12px;
+cursor: pointer;
+color: var(--text);
+transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.dark-toggle-btn:hover {
+background-color: rgba(0, 0, 0, 0.05); /* ✅ subtle in light */
+transform: scale(1.05);
+}
+
+.dark-mode .dark-toggle-btn:hover {
+background-color: rgba(255, 255, 255, 0.08); /* ✅ subtle in dark */
+}
+
+.back-link {
+font-size: 1em;
+margin-top: 20px;
+text-decoration: none;
+color: var(--text); /* Adapts to light/dark mode */
+transition: color 0.3s ease;
+display: inline-block;
+}
+
+.back-link:hover {
+text-decoration: underline;
+color: #4A90E2; /* Same highlight as buttons */
+}
+
+/* === Mute / Unmute Buttons === */
+.mute-btn {
+margin-left: 6px;
+padding: 2px 6px;
+font-size: 14px;
+color: var(--text);
+background-color: rgba(0, 0, 0, 0.05);
+border: 1px solid rgba(0, 0, 0, 0.2);
+border-radius: 5px;
+cursor: pointer;
+transition: background-color 0.3s ease;
+}
+
+.mute-btn:hover {
+background-color: rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .mute-btn {
+background-color: rgba(255, 255, 255, 0.05);
+border-color: rgba(255, 255, 255, 0.15);
+color: var(--text);
+}
+
+.dark-mode .mute-btn:hover {
+background-color: rgba(255, 255, 255, 0.1);
+}
+
+.emoji-dot {
+user-select: none;
+cursor: default;
+font-size: 16px;
+margin-right: 6px;
+line-height: 1;
+}
+
+#users {
+  list-style-type: none;
+  padding-left: 0;
+}
+
+/* === Chat + Game two-column layout (LEFT: game, RIGHT: chat) === */
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* equal width columns */
+  gap: 20px;
+  padding: 0 16px;
+  width: 1200px;                    /* total width (2x 590px + 20 gap approx) */
+  margin: 0 auto;                   /* center on screen */
+}
+
+
+
+/* LEFT gray game panel */
+.game-panel {
+  position: relative;
+  background: #e0e0e0;
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+  padding: 14px;
+  box-sizing: border-box;   /* ← include padding in the fixed height */
+}
+
+
+
+/* Make both panels same fixed height */
+.game-panel,
+.chat-panel {
+  height: 80vh;           /* same height */
+  min-height: 600px;
+  box-sizing: border-box; /* ensure padding doesn’t add to total height */
+}
+
+
+
+/* Base pill style for any tile/button */
+.game-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: #eef3f7;
+  color: #1c2a35;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease;
+  position: static; /* ⬅️ no global positioning */
+}
+
+/* Only the tile inside the LEFT game panel is positioned */
+.game-panel > .game-tile {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+}
+
+.game-tile:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0,0,0,0.2);
+}
+.game-tile:active { transform: translateY(0); }
+.game-tile .icon { font-size: 20px; }
+
+
+
+
+
+
+/* RIGHT chat column wrapper */
+.chat-panel {
+  background: var(--chat-bg);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 14px;            /* ← match game-panel */
+  box-sizing: border-box;   /* ← include padding in the fixed height */
+}
+
+
+
+/* Let chat content fill height, keep input/emojis fixed at bottom */
+.chat-panel > .chat-box {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.chat-box .container {
+  height: 100%;
+  min-height: 0;
+}
+
+
