@@ -1,38 +1,87 @@
-/* Base card styling */
-.pcards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 12px;
-  align-items: start;
+:root{
+  --card-w: 142px;          /* standard-ish 2.5x3.5in scaled */
+  --card-h: 198px;
+  --radius: 14px;
+  --border: #e6e9ef;
+  --shadow: 0 6px 16px rgba(0,0,0,.16);
+  --shadow-hover: 0 12px 28px rgba(0,0,0,.22);
+  --bg: #ffffff;
+  --red: #e23b3b;
+  --black: #101418;
+  --blue-back: #1f4f8b;
 }
 
-.pcard-wrap {
-  perspective: 1000px;
-  cursor: pointer;
+*{ box-sizing: border-box; }
+
+body{
+  margin:0;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Segoe UI Symbol", sans-serif;
+  background: #f6f8fb;
+  color:#0e1116;
 }
 
-.pcard {
-  border-radius: 12px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
-  background: #fff;
-  display: block;
+.toolbar{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:14px 16px;
 }
 
-.pcard-wrap:hover .pcard {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(0,0,0,0.2);
+.toolbar h1{
+  font-size:28px;
+  font-weight:800;
+  margin:0;
 }
 
-/* Flip animation (optional demo) */
-.pcard-face {
-  position: relative;
-  transform-style: preserve-3d;
-  transition: transform 0.4s ease;
+.toolbar .actions{ margin-left:auto; display:flex; gap:8px; }
+.toolbar button{
+  padding:8px 14px;
+  border-radius:10px;
+  border:1px solid #cdd5e0;
+  background:#fff;
+  cursor:pointer;
+  transition:transform .12s ease, box-shadow .12s ease, background .2s;
 }
-.pcard-face.flipped { transform: rotateY(180deg); }
+.toolbar button:hover{ transform:translateY(-1px); box-shadow: var(--shadow); }
+.toolbar button:active{ transform:translateY(0); }
 
-.pcard-front, .pcard-back {
-  backface-visibility: hidden;
+.card-grid{
+  padding:10px 14px 40px;
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr));
+  gap:14px;
+  max-width:1600px;
+  margin:0 auto;
 }
-.pcard-back { transform: rotateY(180deg); }
+
+.card{
+  width:var(--card-w);
+  height:var(--card-h);
+  border-radius:var(--radius);
+  background:var(--bg);
+  border:1px solid var(--border);
+  box-shadow: var(--shadow);
+  overflow:hidden;
+  transition: transform .18s ease, box-shadow .18s ease;
+  will-change: transform;
+}
+.card:hover{
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: var(--shadow-hover);
+}
+
+.card svg{
+  width:100%;
+  height:100%;
+  display:block;
+}
+
+/* Hide selection highlight when clicking fast */
+.card, .card *{
+  -webkit-user-select:none;
+  user-select:none;
+}
+
+/* Small helper for corner indices inside SVG (if any text is used) */
+.text-red{ fill: var(--red); }
+.text-black{ fill: var(--black); }

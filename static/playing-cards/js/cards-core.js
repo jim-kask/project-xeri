@@ -1,47 +1,47 @@
-// Minimal playing cards core (ES module)
+// cards-core.js
+import { cardSVG } from "./card-svg.js";
 
-/** Suits and ranks (A high; tweak as needed) */
-export const SUITS = ["♠", "♥", "♦", "♣"];
-export const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
+const SUITS = ["S","H","D","C"];
+const RANKS = ["A","2","3","4","5","6","7","8","9","10","J","Q","K"];
 
-/** Fresh ordered 52-card deck */
-export function createDeck() {
+export function makeDeck(){
   const deck = [];
-  for (const suit of SUITS) {
-    for (const rank of RANKS) {
-      deck.push({ suit, rank, code: `${rank}${suit}` });
+  for(const s of SUITS){
+    for(const r of RANKS){
+      deck.push({ rank:r, suit:s, faceUp:true, id:`${r}${s}-${Math.random().toString(36).slice(2,8)}` });
     }
   }
   return deck;
 }
 
-/** Fisher–Yates shuffle (in place) */
-export function shuffle(deck, rng = Math.random) {
-  for (let i = deck.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
+export function shuffle(deck){
+  for(let i = deck.length -1; i>0; i--){
+    const j = Math.floor(Math.random()*(i+1));
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
 }
 
-/** Deal n cards; returns [hand, remaining] */
-export function deal(deck, n = 1) {
-  const hand = deck.slice(0, n);
-  const remaining = deck.slice(n);
-  return [hand, remaining];
+export function flipAll(deck){
+  const anyDown = deck.some(c => !c.faceUp);
+  for(const c of deck){ c.faceUp = anyDown ? true : false; }
 }
 
-/** Helpers */
-const rankOrder = new Map(RANKS.map((r, i) => [r, i]));
-export function compareCards(a, b) {
-  if (a.suit !== b.suit) return a.suit.localeCompare(b.suit);
-  return rankOrder.get(a.rank) - rankOrder.get(b.rank);
+export function renderDeck(container, deck){
+  container.innerHTML = "";
+  for(const card of deck){
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = cardSVG({ rank:card.rank, suit:card.suit, faceUp:card.faceUp });
+    el.title = `${card.rank} of ${longSuit(card.suit)} (click to flip)`;
+    el.addEventListener("click", () => {
+      card.faceUp = !card.faceUp;
+      el.innerHTML = cardSVG(card);
+    });
+    container.appendChild(el);
+  }
 }
 
-export function serialize(card) { return `${card.rank}${card.suit}`; }
-export function parse(code) {
-  const suit = code.slice(-1);
-  const rank = code.slice(0, -1);
-  if (!SUITS.includes(suit) || !RANKS.includes(rank)) throw new Error("Bad code");
-  return { suit, rank, code };
+function longSuit(s){
+  return {S:"Spades", H:"Hearts", D:"Diamonds", C:"Clubs"}[s] || s;
 }
