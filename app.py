@@ -9,9 +9,7 @@ from moderators import moderators
 from datetime import datetime, timedelta
 from flask import jsonify
 from games_service import init_socketio as init_games
-# --- Xeri game (new, minimal; does not affect Stress) ---
-from games.xeri.blueprint import xeri_bp
-app.register_blueprint(xeri_bp, url_prefix="/game/xeri")
+
 
 
 app = Flask(__name__)
@@ -26,6 +24,12 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 socketio = SocketIO(app, cors_allowed_origins="*")
 db.init_app(app)
+
+
+# --- Xeri game (new, minimal; does not affect Stress) ---
+from games.xeri.blueprint import xeri_bp
+app.register_blueprint(xeri_bp, url_prefix="/game/xeri")
+
 
 # === Initialize DB and assign mod flags ===
 with app.app_context():
