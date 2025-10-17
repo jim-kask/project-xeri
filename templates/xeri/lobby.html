@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<section style="max-width:960px;margin:24px auto;">
+  <h1>Ξερή (Xeri)</h1>
+  <p>Choose how to play:</p>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;">
+    <a class="btn" href="{{ url_for('xeri_bp.play_local', mode='cpu') }}">🤖 Play vs Computer</a>
+    <a class="btn" href="{{ url_for('xeri_bp.play_local', mode='room') }}">🔗 Join / Create Room (coming soon)</a>
+  </div>
+</section>
+{% endblock %}

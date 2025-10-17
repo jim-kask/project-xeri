@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='xeri/xeri.css') }}">
+<section id="xeri-root" class="xeri-root">
+  <header class="xeri-bar">
+    <h2>Ξερή — {{ 'vs Computer' if mode=='cpu' else 'Room' }}</h2>
+    <div id="scoreboard"></div>
+  </header>
+
+  <main class="table">
+    <div id="center-pile" class="pile"></div>
+    <div id="hand" class="hand"></div>
+    <button id="playBtn" disabled>Play Selected Card</button>
+    <div id="xeri-pop" class="xeri-pop">ΞΕΡΗ!</div>
+  </main>
+</section>
+<script type="module" src="{{ url_for('static', filename='xeri/xeri.module.js') }}"></script>
+{% endblock %}
